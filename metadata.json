@@ -1,0 +1,6 @@
+{
+  "name": "Flashcard Hafalan Al-Qur'an",
+  "description": "Aplikasi flashcard hafalan Al-Qur'an interaktif dan estetik dengan pemilihan Juz & Halaman, pancingan awal ayat, flip card 3D, dan audio murottal.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
