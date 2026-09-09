@@ -47,9 +47,6 @@ export const Header: React.FC<HeaderProps> = ({
                 <h1 className="font-display font-bold text-slate-800 text-base sm:text-lg tracking-tight">
                   Tahfidz Flashcard
                 </h1>
-                <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-pink-100 text-pink-700 tracking-wider">
-                  Al-Qur'an
-                </span>
               </div>
             </div>
           </div>
