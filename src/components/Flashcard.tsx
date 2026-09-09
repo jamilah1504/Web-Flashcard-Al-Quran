@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'motion/react';
 import {
   Sparkles,
   Volume2,
@@ -61,8 +62,8 @@ export const Flashcard: React.FC<FlashcardProps> = ({
 
   return (
     <div className="w-full max-w-2xl mx-auto perspective-1000 py-2 select-none">
-      {/* 3D Flip Card Container */}
-      <div
+      {/* 3D Flip Card Container with Motion */}
+      <motion.div
         id="quran-flashcard"
         onClick={onToggleFlip}
         role="button"
@@ -74,18 +75,32 @@ export const Flashcard: React.FC<FlashcardProps> = ({
             onToggleFlip();
           }
         }}
-        className={`relative w-full min-h-[380px] sm:min-h-[420px] transition-transform duration-700 transform-style-3d cursor-pointer group outline-hidden ${
-          isFlipped ? 'rotate-y-180' : ''
-        }`}
+        initial={false}
+        animate={{ rotateY: isFlipped ? 180 : 0 }}
+        transition={{ duration: 0.55, ease: [0.23, 1, 0.32, 1] }}
+        style={{
+          transformStyle: 'preserve-3d',
+          WebkitTransformStyle: 'preserve-3d',
+        }}
+        className="relative w-full min-h-[390px] sm:min-h-[430px] cursor-pointer group outline-hidden"
       >
         {/* ========================================================= */}
         {/* FRONT SIDE: INITIAL VIEW / PANCINGAN AWAL AYAT            */}
         {/* ========================================================= */}
         <div
-          className={`absolute inset-0 w-full h-full backface-hidden rounded-3xl p-4 sm:p-7 flex flex-col justify-between transition-all duration-300 ${
+          style={{
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+            transform: 'rotateY(0deg) translate3d(0, 0, 1px)',
+            WebkitTransform: 'rotateY(0deg) translate3d(0, 0, 1px)',
+            pointerEvents: isFlipped ? 'none' : 'auto',
+          }}
+          className={`absolute inset-0 w-full h-full rounded-3xl p-4 sm:p-7 flex flex-col justify-between transition-opacity duration-300 bg-white ${
+            isFlipped ? 'opacity-0 invisible pointer-events-none' : 'opacity-100 visible z-10'
+          } ${
             isMemorized
-              ? 'bg-gradient-to-br from-white/95 via-rose-50/70 to-emerald-50/60 border-2 border-emerald-300 shadow-xl shadow-emerald-100/40'
-              : 'bg-gradient-to-br from-white/95 via-rose-50/60 to-pink-50/70 border border-pink-200/80 shadow-xl shadow-pink-200/30 hover:shadow-2xl hover:shadow-pink-200/40'
+              ? 'bg-gradient-to-br from-white via-rose-50/70 to-emerald-50/60 border-2 border-emerald-300 shadow-xl shadow-emerald-100/40'
+              : 'bg-gradient-to-br from-white via-rose-50/60 to-pink-50/70 border border-pink-200/80 shadow-xl shadow-pink-200/30 hover:shadow-2xl hover:shadow-pink-200/40'
           }`}
         >
           {/* Subtle decorative background Islamic pattern elements */}
@@ -95,7 +110,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
           {/* Top Bar on Front */}
           <div className="relative z-10 flex items-center justify-between gap-2 border-b border-pink-100/70 pb-2.5 sm:pb-3">
             {/* Surah & Ayah Badge */}
-            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
               <span className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-pink-100/80 text-pink-700 text-[11px] sm:text-xs font-semibold border border-pink-200 truncate">
                 <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-pink-500 fill-pink-300 shrink-0" />
                 <span className="truncate">
@@ -223,10 +238,19 @@ export const Flashcard: React.FC<FlashcardProps> = ({
         {/* BACK SIDE: FLIPPED / AYAT LENGKAP & TERJEMAHAN             */}
         {/* ========================================================= */}
         <div
-          className={`absolute inset-0 w-full h-full backface-hidden rotate-y-180 rounded-3xl p-4 sm:p-7 flex flex-col justify-between transition-all duration-300 ${
+          style={{
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+            transform: 'rotateY(180deg) translate3d(0, 0, 1px)',
+            WebkitTransform: 'rotateY(180deg) translate3d(0, 0, 1px)',
+            pointerEvents: isFlipped ? 'auto' : 'none',
+          }}
+          className={`absolute inset-0 w-full h-full rounded-3xl p-4 sm:p-7 flex flex-col justify-between transition-opacity duration-300 bg-white ${
+            isFlipped ? 'opacity-100 visible z-10' : 'opacity-0 invisible pointer-events-none'
+          } ${
             isMemorized
-              ? 'bg-gradient-to-br from-white/98 via-emerald-50/50 to-pink-50/70 border-2 border-emerald-300 shadow-xl'
-              : 'bg-gradient-to-br from-white/98 via-pink-50/60 to-purple-50/50 border border-pink-200/90 shadow-xl'
+              ? 'bg-gradient-to-br from-white via-emerald-50/60 to-pink-50/70 border-2 border-emerald-300 shadow-xl'
+              : 'bg-gradient-to-br from-white via-pink-50/70 to-purple-50/60 border border-pink-200/90 shadow-xl'
           }`}
         >
           {/* Decorative Corner Ornaments */}
@@ -365,7 +389,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

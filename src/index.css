@@ -6,22 +6,28 @@
   --font-sans: 'Plus Jakarta Sans', 'Quicksand', system-ui, sans-serif;
 }
 
-/* Custom 3D Card Flip Styles */
+/* Custom 3D Card Flip Styles with Full WebKit/iOS Compatibility */
 .perspective-1000 {
   perspective: 1000px;
+  -webkit-perspective: 1000px;
 }
 
 .transform-style-3d {
   transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
 }
 
 .backface-hidden {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  -moz-backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
 }
 
 .rotate-y-180 {
   transform: rotateY(180deg);
+  -webkit-transform: rotateY(180deg);
 }
 
 /* Custom scrollbar for aesthetic feel */
