@@ -1,19 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import {
   Sparkles,
   Volume2,
   VolumeX,
   RotateCw,
-  Heart,
-  Eye,
-  EyeOff,
   Square,
   Loader2,
+  HelpCircle,
+  BookOpen,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { Ayah } from '../types';
+import { Ayah, AyahStatusType, AyahUserStatus } from '../types';
+import { ThemeConfig } from '../utils/themeHelper';
 import { toArabicNumerals } from '../utils/quranHelper';
+import { parseTajweed, TajweedRuleType } from '../utils/tajweedHelper';
+import { TajweedText } from './TajweedText';
+import { StatusButtons } from './StatusButtons';
+import { AyahTajweedExplainer } from './AyahTajweedExplainer';
 
 interface FlashcardProps {
   ayah: Ayah;
@@ -21,8 +25,12 @@ interface FlashcardProps {
   total: number;
   isFlipped: boolean;
   onToggleFlip: () => void;
-  isMemorized: boolean;
-  onToggleMemorized: () => void;
+  status?: AyahUserStatus;
+  onToggleStatus: (ayah: Ayah, type: AyahStatusType) => void;
+  themeConfig: ThemeConfig;
+  showLatin: boolean;
+  showTajweed: boolean;
+  onOpenTajweedModal: () => void;
   isAudioMuted: boolean;
   isPlayingAudio: boolean;
   isAudioLoading: boolean;
@@ -35,30 +43,44 @@ export const Flashcard: React.FC<FlashcardProps> = ({
   total,
   isFlipped,
   onToggleFlip,
-  isMemorized,
-  onToggleMemorized,
+  status,
+  onToggleStatus,
+  themeConfig,
+  showLatin,
+  showTajweed,
+  onOpenTajweedModal,
   isAudioMuted,
   isPlayingAudio,
   isAudioLoading,
   onToggleAudio,
 }) => {
-  const handleMemorizeClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!isMemorized) {
-      // Fire soft celebration confetti
+  const isMemorized = !!status?.isMemorized;
+  const [selectedTajweedRule, setSelectedTajweedRule] = useState<TajweedRuleType | null>(null);
+
+  // Reset selected tajweed rule on ayah change or flip
+  useEffect(() => {
+    setSelectedTajweedRule(null);
+  }, [ayah.number, isFlipped]);
+
+  const handleStatusChange = (ayahItem: Ayah, type: AyahStatusType) => {
+    if (type === 'memorized' && !status?.isMemorized) {
       try {
         confetti({
-          particleCount: 40,
+          particleCount: 35,
           spread: 55,
           origin: { y: 0.65 },
-          colors: ['#f472b6', '#ec4899', '#fbcfe8', '#f59e0b', '#c084fc'],
+          colors: ['#10b981', '#34d399', '#f59e0b', '#ec4899', '#38bdf8'],
         });
       } catch (err) {
         // Safe fallback
       }
     }
-    onToggleMemorized();
+    onToggleStatus(ayahItem, type);
   };
+
+  const parsedTokens = React.useMemo(() => {
+    return parseTajweed(ayah.tajweedText || ayah.text);
+  }, [ayah.tajweedText, ayah.text]);
 
   return (
     <div className="w-full max-w-2xl mx-auto perspective-1000 py-2 select-none">
@@ -82,7 +104,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
           transformStyle: 'preserve-3d',
           WebkitTransformStyle: 'preserve-3d',
         }}
-        className="relative w-full min-h-[390px] sm:min-h-[430px] cursor-pointer group outline-hidden"
+        className="relative w-full min-h-[440px] sm:min-h-[480px] cursor-pointer group outline-hidden"
       >
         {/* ========================================================= */}
         {/* FRONT SIDE: INITIAL VIEW / PANCINGAN AWAL AYAT            */}
@@ -95,141 +117,115 @@ export const Flashcard: React.FC<FlashcardProps> = ({
             WebkitTransform: 'rotateY(0deg) translate3d(0, 0, 1px)',
             pointerEvents: isFlipped ? 'none' : 'auto',
           }}
-          className={`absolute inset-0 w-full h-full rounded-3xl p-4 sm:p-7 flex flex-col justify-between transition-opacity duration-300 bg-white ${
+          className={`absolute inset-0 w-full h-full rounded-3xl p-4 sm:p-6 flex flex-col justify-between transition-opacity duration-300 bg-white ${
             isFlipped ? 'opacity-0 invisible pointer-events-none' : 'opacity-100 visible z-10'
           } ${
             isMemorized
-              ? 'bg-gradient-to-br from-white via-rose-50/70 to-emerald-50/60 border-2 border-emerald-300 shadow-xl shadow-emerald-100/40'
-              : 'bg-gradient-to-br from-white via-rose-50/60 to-pink-50/70 border border-pink-200/80 shadow-xl shadow-pink-200/30 hover:shadow-2xl hover:shadow-pink-200/40'
+              ? 'bg-gradient-to-br from-white via-emerald-50/60 to-emerald-100/40 border-2 border-emerald-300 shadow-xl shadow-emerald-100/40'
+              : `${themeConfig.cardFrontBg} border ${themeConfig.cardBorder} ${themeConfig.cardShadow}`
           }`}
         >
-          {/* Subtle decorative background Islamic pattern elements */}
-          <div className="absolute top-0 right-0 w-44 h-44 bg-gradient-to-bl from-pink-200/20 via-rose-100/10 to-transparent rounded-bl-full pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-36 h-36 bg-gradient-to-tr from-purple-200/20 via-pink-100/10 to-transparent rounded-tr-full pointer-events-none" />
-
           {/* Top Bar on Front */}
-          <div className="relative z-10 flex items-center justify-between gap-2 border-b border-pink-100/70 pb-2.5 sm:pb-3">
-            {/* Surah & Ayah Badge */}
-            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
-              <span className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-pink-100/80 text-pink-700 text-[11px] sm:text-xs font-semibold border border-pink-200 truncate">
-                <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-pink-500 fill-pink-300 shrink-0" />
+          <div className="relative z-10 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5 sm:pb-3">
+            {/* Surah & Ayah Info */}
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+              <span
+                className={`flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold border truncate ${themeConfig.badgeBg}`}
+              >
+                <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
                 <span className="truncate">
-                  {ayah.surah.englishName} : Ayat {ayah.numberInSurah}
+                  {ayah.surah.englishName} : {ayah.numberInSurah}
                 </span>
               </span>
-              <span className="text-[11px] text-stone-500 hidden sm:inline truncate">
-                ({ayah.surah.englishNameTranslation})
+              <span className="text-[11px] sm:text-xs text-slate-500 font-medium">
+                ({index + 1}/{total})
               </span>
             </div>
 
-            {/* Action buttons on Front: Audio & Memorized */}
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              {/* Play/Nonaktifkan Audio Button on Front */}
+            {/* Right: Status Buttons + Audio Trigger */}
+            <div className="flex items-center gap-1.5">
+              <StatusButtons
+                ayah={ayah}
+                status={status}
+                onToggleStatus={handleStatusChange}
+                size="sm"
+                showLabels={false}
+              />
+
+              {/* Audio Button */}
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggleAudio();
                 }}
-                id="front-audio-btn"
-                className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold transition-all shrink-0 ${
-                  isPlayingAudio
-                    ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-xs ring-2 ring-rose-300 animate-pulse'
-                    : isAudioLoading
-                    ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                    : isAudioMuted
-                    ? 'bg-stone-100 hover:bg-stone-200 text-stone-500 border border-stone-200'
-                    : 'bg-white/90 hover:bg-pink-50 text-pink-700 hover:text-pink-800 border border-pink-200/90'
-                }`}
+                disabled={isAudioMuted}
                 title={
-                  isPlayingAudio
-                    ? 'Nonaktifkan / Hentikan Audio'
-                    : isAudioMuted
-                    ? 'Audio Dinonaktifkan (Klik untuk memutar)'
-                    : 'Dengarkan Pelafalan Murottal Syaikh Misyari'
+                  isAudioMuted
+                    ? 'Audio dinonaktifkan di header'
+                    : isPlayingAudio
+                    ? 'Hentikan Audio'
+                    : 'Putar audio pancingan ayat'
                 }
+                className={`p-2 rounded-2xl border transition-all ${
+                  isAudioMuted
+                    ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                    : isPlayingAudio
+                    ? 'bg-rose-500 text-white border-rose-600 animate-pulse shadow-md shadow-rose-200'
+                    : 'bg-white/90 text-slate-700 border-slate-200 hover:bg-slate-50 hover:scale-105 active:scale-95 shadow-xs'
+                }`}
               >
                 {isPlayingAudio ? (
-                  <>
-                    <Square className="w-3 h-3 fill-current shrink-0" />
-                    <span>Nonaktifkan Audio</span>
-                  </>
+                  <Square className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" />
                 ) : isAudioLoading ? (
-                  <>
-                    <Loader2 className="w-3 h-3 animate-spin text-amber-700 shrink-0" />
-                    <span>Memuat...</span>
-                  </>
+                  <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-amber-500" />
                 ) : isAudioMuted ? (
-                  <>
-                    <VolumeX className="w-3.5 h-3.5 text-stone-400 shrink-0" />
-                    <span className="hidden xs:inline">Audio Nonaktif</span>
-                  </>
+                  <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 ) : (
-                  <>
-                    <Volume2 className="w-3.5 h-3.5 text-pink-600 shrink-0" />
-                    <span>Putar Audio</span>
-                  </>
+                  <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 )}
-              </button>
-
-              {/* Memorized status toggle button */}
-              <button
-                onClick={handleMemorizeClick}
-                id="front-memorize-btn"
-                className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold transition-all shrink-0 ${
-                  isMemorized
-                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                    : 'bg-white/80 hover:bg-pink-50 text-stone-600 hover:text-pink-600 border border-stone-200'
-                }`}
-                title={isMemorized ? 'Sudah Dihafal' : 'Tandai Sudah Hafal'}
-              >
-                <Heart
-                  className={`w-3.5 h-3.5 shrink-0 ${
-                    isMemorized ? 'fill-emerald-600 text-emerald-600' : 'text-stone-400'
-                  }`}
-                />
-                <span>{isMemorized ? 'Hafal' : 'Tandai'}</span>
               </button>
             </div>
           </div>
 
-          {/* Center: The Opener Phrase (Pancingan Ayat) */}
-          <div className="relative z-10 my-auto py-4 sm:py-6 text-center space-y-3 sm:space-y-4">
-            {/* Optional Bismillah indicator on Surah opening verses */}
-            {ayah.hasBismillahHeader && (
-              <div className="inline-block px-3 py-1 rounded-full bg-pink-100/70 border border-pink-200 text-pink-700 font-arabic text-xs sm:text-sm font-semibold">
-                بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
+          {/* Center: First Phrase (Pancingan Awal Ayat) */}
+          <div className="relative z-10 flex-1 flex flex-col items-center justify-center my-auto py-5 text-center">
+            <div className="inline-block px-3 py-1 rounded-full bg-white/80 border border-slate-200/80 text-[11px] font-semibold text-slate-600 mb-3 shadow-2xs">
+              Pancingan Awal Ayat
+            </div>
+
+            {/* Arabic Opener Phrase with Tajweed support */}
+            <div className="w-full px-2">
+              <TajweedText
+                text={ayah.firstPhrase}
+                showTajweed={showTajweed}
+                className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 leading-[2.1] tracking-wide"
+                onRuleClick={(rule) => setSelectedTajweedRule(rule)}
+              />
+            </div>
+
+            {/* Latin Opener Hint (if enabled) */}
+            {showLatin && ayah.firstPhraseLatin && (
+              <div className="mt-3 px-3 py-1.5 rounded-xl bg-white/70 border border-slate-200/60 text-xs sm:text-sm text-slate-600 italic font-medium">
+                "{ayah.firstPhraseLatin}"
               </div>
             )}
 
-            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-rose-100/70 text-rose-700 text-[11px] sm:text-xs font-medium">
-              <span>🌸 Pancingan Awal Ayat</span>
-            </div>
-
-            {/* Big Arabic Opener */}
-            <div className="px-2 sm:px-6">
-              <p
-                dir="rtl"
-                className="font-arabic text-2xl sm:text-4xl lg:text-5xl text-slate-800 font-bold leading-loose sm:leading-loose tracking-wide py-1 drop-shadow-xs break-words"
-              >
-                {ayah.firstPhrase}
-              </p>
-            </div>
-
-            <p className="text-[11px] sm:text-xs text-stone-500 font-medium">
-              Bisakah kamu melanjutkan sisa ayat ini di ingatanmu?
+            <p className="text-xs sm:text-sm text-slate-500 mt-4 max-w-sm font-medium">
+              Ingat kelanjutan ayat ini di dalam hati, lalu ketuk kartu untuk memeriksa kebenarannya.
             </p>
           </div>
 
-          {/* Bottom Bar on Front: Tap hint */}
-          <div className="relative z-10 border-t border-pink-100/70 pt-2.5 sm:pt-3 flex items-center justify-between text-xs text-stone-500 gap-2">
-            <div className="flex items-center gap-1.5 text-pink-600 font-medium min-w-0">
-              <Eye className="w-3.5 h-3.5 shrink-0 animate-pulse" />
-              <span className="text-[11px] sm:text-xs truncate">
-                Ketuk kartu untuk membuka teks lengkap & terjemahan ✨
-              </span>
+          {/* Bottom Flip Hint */}
+          <div className="relative z-10 pt-3 border-t border-slate-100/80 flex items-center justify-between text-slate-500 text-xs">
+            <div className="flex items-center gap-1.5 text-slate-400 text-[11px]">
+              <BookOpen className="w-3.5 h-3.5 text-slate-400" />
+              <span>Halaman {ayah.page} · Juz {ayah.juz}</span>
             </div>
-            <div className="p-1.5 rounded-full bg-pink-100/60 text-pink-600 group-hover:bg-pink-200/80 transition-colors shrink-0">
-              <RotateCw className="w-3.5 h-3.5" />
+
+            <div className="flex items-center gap-1.5 font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">
+              <span>Ketuk untuk Membuka</span>
+              <RotateCw className="w-3.5 h-3.5 text-slate-400 group-hover:rotate-180 transition-transform duration-500" />
             </div>
           </div>
         </div>
@@ -245,147 +241,139 @@ export const Flashcard: React.FC<FlashcardProps> = ({
             WebkitTransform: 'rotateY(180deg) translate3d(0, 0, 1px)',
             pointerEvents: isFlipped ? 'auto' : 'none',
           }}
-          className={`absolute inset-0 w-full h-full rounded-3xl p-4 sm:p-7 flex flex-col justify-between transition-opacity duration-300 bg-white ${
+          className={`absolute inset-0 w-full h-full rounded-3xl p-4 sm:p-6 flex flex-col justify-between transition-opacity duration-300 bg-white ${
             isFlipped ? 'opacity-100 visible z-10' : 'opacity-0 invisible pointer-events-none'
           } ${
             isMemorized
               ? 'bg-gradient-to-br from-white via-emerald-50/60 to-pink-50/70 border-2 border-emerald-300 shadow-xl'
-              : 'bg-gradient-to-br from-white via-pink-50/70 to-purple-50/60 border border-pink-200/90 shadow-xl'
+              : `${themeConfig.cardBackBg} border ${themeConfig.cardBorder} shadow-xl`
           }`}
         >
-          {/* Decorative Corner Ornaments */}
-          <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-amber-200/15 to-transparent rounded-br-full pointer-events-none" />
-          <div className="absolute bottom-0 right-0 w-36 h-36 bg-gradient-to-tl from-pink-200/20 to-transparent rounded-tl-full pointer-events-none" />
-
           {/* Top Bar on Back */}
-          <div className="relative z-10 flex items-center justify-between border-b border-pink-100/70 pb-2 sm:pb-2.5 gap-2">
+          <div className="relative z-10 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5 sm:pb-3">
+            {/* Surah & Revelation info */}
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-              <span className="font-arabic text-sm sm:text-base font-bold text-pink-800 truncate">
-                {ayah.surah.name}
+              <span
+                className={`flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold border truncate ${themeConfig.badgeBg}`}
+              >
+                {ayah.surah.englishName} · Ayat {ayah.numberInSurah}
               </span>
-              <span className="text-[11px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200 shrink-0">
-                Ayat {ayah.numberInSurah}
+              <span className="text-[11px] sm:text-xs text-slate-500 font-medium">
+                {ayah.surah.revelationType === 'Meccan' ? 'Makkiyyah' : 'Madaniyyah'}
               </span>
             </div>
 
-            {/* Audio Button & Mark Button */}
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Right: Status Buttons + Audio */}
+            <div className="flex items-center gap-1.5">
+              <StatusButtons
+                ayah={ayah}
+                status={status}
+                onToggleStatus={handleStatusChange}
+                size="sm"
+                showLabels={false}
+              />
+
+              {/* Audio Button */}
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggleAudio();
                 }}
-                id="audio-play-verse-btn"
-                className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold shadow-xs transition-all ${
-                  isPlayingAudio
-                    ? 'bg-rose-500 hover:bg-rose-600 text-white ring-2 ring-rose-300 animate-pulse'
-                    : isAudioLoading
-                    ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                    : isAudioMuted
-                    ? 'bg-stone-100 hover:bg-stone-200 text-stone-500 border border-stone-200'
-                    : 'bg-rose-100 text-rose-800 hover:bg-rose-200 border border-rose-200/80'
-                }`}
+                disabled={isAudioMuted}
                 title={
-                  isPlayingAudio
-                    ? 'Nonaktifkan / Hentikan Audio'
-                    : isAudioMuted
-                    ? 'Audio Dinonaktifkan (Klik untuk memutar)'
-                    : 'Dengarkan pelafalan Murottal Syaikh Misyari Rasyid Al-Afasy'
+                  isAudioMuted
+                    ? 'Audio dinonaktifkan di header'
+                    : isPlayingAudio
+                    ? 'Hentikan Audio'
+                    : 'Dengarkan murottal ayat lengkap'
                 }
+                className={`p-2 rounded-2xl border transition-all ${
+                  isAudioMuted
+                    ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                    : isPlayingAudio
+                    ? 'bg-rose-500 text-white border-rose-600 animate-pulse shadow-md shadow-rose-200'
+                    : 'bg-white/90 text-slate-700 border-slate-200 hover:bg-slate-50 hover:scale-105 active:scale-95 shadow-xs'
+                }`}
               >
                 {isPlayingAudio ? (
-                  <>
-                    <Square className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-current shrink-0" />
-                    <span>Nonaktifkan Audio</span>
-                  </>
+                  <Square className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" />
                 ) : isAudioLoading ? (
-                  <>
-                    <Loader2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-spin text-amber-700 shrink-0" />
-                    <span>Memuat...</span>
-                  </>
+                  <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-amber-500" />
                 ) : isAudioMuted ? (
-                  <>
-                    <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-stone-400 shrink-0" />
-                    <span className="hidden xs:inline">Audio Nonaktif</span>
-                  </>
+                  <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 ) : (
-                  <>
-                    <Volume2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                    <span>Putar Audio</span>
-                  </>
+                  <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 )}
-              </button>
-
-              <button
-                onClick={handleMemorizeClick}
-                id="back-memorize-btn"
-                className={`p-1 sm:p-1.5 rounded-full border transition-all ${
-                  isMemorized
-                    ? 'bg-emerald-100 text-emerald-700 border-emerald-300'
-                    : 'bg-white text-stone-400 hover:text-pink-600 border-stone-200'
-                }`}
-                title={isMemorized ? 'Sudah Dihafal' : 'Tandai Sudah Hafal'}
-              >
-                <Heart
-                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${
-                    isMemorized ? 'fill-emerald-600 text-emerald-600' : ''
-                  }`}
-                />
               </button>
             </div>
           </div>
 
-          {/* Center: Full Arabic Verse & Indonesian Translation */}
-          <div className="relative z-10 my-auto py-2.5 sm:py-3 space-y-3 sm:space-y-4 overflow-y-auto max-h-[250px] sm:max-h-[300px] pr-1">
-            {/* Optional Bismillah Header on Verse 1 of Surah */}
-            {ayah.hasBismillahHeader && (
-              <div className="text-center py-1.5 px-3 rounded-2xl bg-gradient-to-r from-pink-50 via-rose-50 to-purple-50 border border-pink-100 mb-2 shadow-2xs">
-                <p
-                  dir="rtl"
-                  className="font-arabic text-base sm:text-xl text-pink-900 font-bold drop-shadow-xs"
-                >
-                  بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
-                </p>
-                <p className="text-[10px] text-pink-500 font-medium tracking-wide">
-                  Pembuka {ayah.surah.name} ({ayah.surah.englishName})
-                </p>
+          {/* Center: Full Ayah Text + Latin + Translation + Tajweed Explanation */}
+          <div className="relative z-10 flex-1 overflow-y-auto my-auto py-2.5 space-y-3 scrollbar-thin">
+            {/* Arabic Text with Tajweed Coloring */}
+            <div className="text-right px-1">
+              <TajweedText
+                text={ayah.text}
+                tajweedText={ayah.tajweedText}
+                showTajweed={showTajweed}
+                className="text-2xl sm:text-3xl text-slate-900 leading-[2.3]"
+                onRuleClick={(rule) => setSelectedTajweedRule(rule)}
+              />
+              <span className="inline-flex items-center justify-center font-arabic text-xl text-slate-400 mr-2">
+                {toArabicNumerals(ayah.numberInSurah)} ۝
+              </span>
+            </div>
+
+            {/* Latin Transliteration (if enabled) */}
+            {showLatin && ayah.latin && (
+              <div className="text-xs sm:text-sm text-slate-600 italic font-medium leading-relaxed bg-white/70 p-2.5 rounded-xl border border-slate-200/50">
+                <span className="text-[10px] uppercase font-bold text-slate-400 not-italic mr-1.5">
+                  Latin:
+                </span>
+                {ayah.latin}
               </div>
             )}
 
-            {/* Full Arabic Ayah with End Ayah Ornament ۝ */}
-            <div className="text-right px-1">
-              <p
-                dir="rtl"
-                className="font-arabic text-xl sm:text-2xl lg:text-[32px] text-slate-900 font-bold leading-relaxed sm:leading-[2.4] tracking-wide break-words"
-              >
-                {ayah.text}{' '}
-                <span className="inline-flex items-center justify-center font-arabic text-lg sm:text-2xl text-amber-600 mx-1 align-middle whitespace-nowrap">
-                  ۝{toArabicNumerals(ayah.numberInSurah)}
-                </span>
-              </p>
+            {/* Indonesian Translation */}
+            <div className="text-xs sm:text-sm text-slate-700 leading-relaxed font-sans bg-white/80 p-3 rounded-2xl border border-slate-200/60 shadow-2xs">
+              <span className="font-semibold text-slate-900 mr-1.5">Artinya:</span>
+              "{ayah.translation}"
             </div>
 
-            {/* Translation in Indonesian */}
-            <div className="text-left bg-white/80 p-3 sm:p-3.5 rounded-2xl border border-pink-100/80 shadow-2xs">
-              <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-rose-500 mb-1 flex items-center gap-1">
-                <span>Artinya:</span>
-              </p>
-              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-sans">
-                "{ayah.translation}"
-              </p>
-            </div>
+            {/* Interactive Tajweed Rules & How-to-Read Explainer (when Tajweed mode is ON) */}
+            {showTajweed && (
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="pt-1"
+              >
+                <AyahTajweedExplainer
+                  tokens={parsedTokens}
+                  selectedRuleType={selectedTajweedRule}
+                  onSelectRule={(rule) => setSelectedTajweedRule(rule)}
+                  onOpenFullModal={onOpenTajweedModal}
+                />
+              </div>
+            )}
           </div>
 
-          {/* Bottom Bar on Back: Close hint */}
-          <div className="relative z-10 border-t border-pink-100/70 pt-2 sm:pt-2.5 flex items-center justify-between text-xs text-stone-500 gap-2">
-            <div className="flex items-center gap-1.5 text-pink-600 font-medium min-w-0">
-              <EyeOff className="w-3.5 h-3.5 shrink-0" />
-              <span className="text-[11px] sm:text-xs truncate">
-                Ketuk lagi untuk kembali ke pancingan
-              </span>
-            </div>
-            <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-stone-400 shrink-0">
-              <span>Mushaf Madinah</span>
+          {/* Bottom Back Bar */}
+          <div className="relative z-10 pt-2.5 border-t border-slate-100/80 flex items-center justify-between text-slate-500 text-xs">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenTajweedModal();
+              }}
+              className="flex items-center gap-1 text-[11px] text-amber-700 hover:text-amber-800 font-medium"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              <span>Semua Hukum Tajwid</span>
+            </button>
+
+            <div className="flex items-center gap-1.5 font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">
+              <span>Kembali ke Pancingan</span>
+              <RotateCw className="w-3.5 h-3.5 text-slate-400" />
             </div>
           </div>
         </div>
