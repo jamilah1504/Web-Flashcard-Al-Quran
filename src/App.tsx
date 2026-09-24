@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { AnimatePresence } from 'motion/react';
 import {
   Sparkles,
   BookOpen,
@@ -36,6 +37,7 @@ import { TajweedModal } from './components/TajweedModal';
 import { SelectorModal } from './components/SelectorModal';
 import { VerseGridModal } from './components/VerseGridModal';
 import { FloralBackground } from './components/FloralBackground';
+import { SplashScreen } from './components/SplashScreen';
 
 const STATUS_STORAGE_KEY = 'hafalanku_ayah_statuses_v2';
 const OLD_MEMORIZED_STORAGE_KEY = 'tahfidz_memorized_ayahs_v1';
@@ -47,6 +49,9 @@ const SHOW_TAJWEED_STORAGE_KEY = 'hafalanku_show_tajweed';
 const DAILY_TARGET_STORAGE_KEY = 'hafalanku_daily_target_v2';
 
 export default function App() {
+  // 0. Splash / Loading Screen State
+  const [showSplash, setShowSplash] = useState<boolean>(true);
+
   // 1. Navigation & View Mode State
   const [activeView, setActiveView] = useState<ActiveView>('flashcard');
 
@@ -652,6 +657,18 @@ export default function App() {
     <div
       className={`min-h-screen flex flex-col justify-between ${themeConfig.bodyBgClass} relative overflow-x-hidden font-sans transition-colors duration-300`}
     >
+      {/* 0. Welcome / Splash Loading Screen */}
+      <AnimatePresence>
+        {showSplash && (
+          <SplashScreen
+            isLoadingData={isLoading}
+            onFinish={() => setShowSplash(false)}
+            themeConfig={themeConfig}
+            currentTheme={currentTheme}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Nature / Floral Ambient Background (Theme-Aware) */}
       <FloralBackground theme={currentTheme} />
 
@@ -794,7 +811,9 @@ export default function App() {
                   Tips Menghafal Mandiri (Metode Pancingan Kata):
                 </p>
                 <p className="text-slate-500 mt-0.5 leading-relaxed">
-                  Lihat 2 kata awal sebagai pancingan ingatan, sambungkan kelanjutan ayat dalam hati, lalu ketuk kartu untuk memeriksa keakuratan lafal, harakat tajwid, dan artinya. Gunakan tombol 📌 Favorit, ⏳ Sedang Dihafal, atau ✅ Sudah Dihafal untuk memantau progresmu.
+                  Lihat 2 kata awal sebagai pancingan ingatan, sambungkan kelanjutan ayat dalam hati, lalu ketuk kartu untuk memeriksa keakuratan lafal, harakat tajwid, dan artinya.
+                  <br />
+                  Gunakan tombol 📌 Favorit, ⏳ Sedang Dihafal, atau ✅ Sudah Dihafal untuk memantau progresmu.
                 </p>
               </div>
             </div>
@@ -855,6 +874,14 @@ export default function App() {
             <span>untuk para penuntut ilmu & penghafal Al-Qur'an</span>
           </p>
           <div className="flex items-center gap-2.5 text-slate-400">
+            <button
+              onClick={() => setShowSplash(true)}
+              className="hover:text-slate-700 underline underline-offset-2 transition-colors cursor-pointer"
+              title="Tampilkan layar pembuka"
+            >
+              Layar Pembuka
+            </button>
+            <span>·</span>
             <span>Rasm Utsmani Madinah</span>
             <span>·</span>
             <span>604 Halaman</span>
