@@ -272,7 +272,7 @@ export default function App() {
   });
 
   // Handle Full Manual Sync with Google Sheets
-  const handleTriggerFullSync = async () => {
+  const handleTriggerFullSync = async (spreadsheetId?: string) => {
     setIsSyncing(true);
     setSyncMessage(null);
     try {
@@ -291,6 +291,36 @@ export default function App() {
       }
     } catch (err: any) {
       setSyncMessage(err?.message || 'Gagal menyinkronkan data.');
+    } finally {
+      setIsSyncing(false);
+      setTimeout(() => setSyncMessage(null), 5000);
+    }
+  };
+
+  // Handle Load / Restore Data from Google Sheets
+  const handleTriggerLoad = async (spreadsheetId: string) => {
+    setIsSyncing(true);
+    setSyncMessage(null);
+    try {
+      const res = await loadFromSheet(spreadsheetId);
+      if (res.success && res.data) {
+        if (res.data.statuses && Object.keys(res.data.statuses).length > 0) {
+          setStatusMap(res.data.statuses);
+        }
+        if (res.data.schedules && res.data.schedules.length > 0) {
+          setSchedules(res.data.schedules);
+        }
+        if (res.data.dailyTarget) {
+          setDailyTarget(res.data.dailyTarget);
+        }
+        const now = new Date().toISOString();
+        setLastSyncedAt(now);
+        setSyncMessage(res.message || 'Data berhasil dimuat dari Google Sheets!');
+      } else {
+        setSyncMessage(`Perhatian: ${res.message}`);
+      }
+    } catch (err: any) {
+      setSyncMessage(err?.message || 'Gagal memuat data dari Google Sheets.');
     } finally {
       setIsSyncing(false);
       setTimeout(() => setSyncMessage(null), 5000);
@@ -1131,8 +1161,12 @@ export default function App() {
         themeConfig={themeConfig}
         lastSyncedAt={lastSyncedAt}
         onTriggerSync={handleTriggerFullSync}
+        onTriggerLoad={handleTriggerLoad}
         isSyncing={isSyncing}
         syncMessage={syncMessage}
+        statusMap={statusMap}
+        schedules={schedules}
+        dailyTarget={dailyTarget}
       />
 
       {/* Modal: Panduan Tajwid Berwarna untuk Pemula */}
