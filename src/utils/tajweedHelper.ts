@@ -20,6 +20,7 @@ export interface TajweedToken {
   howToRead?: string; // Penjelasan cara membacanya
   duration?: string;  // Durasi harakat / ketukan
   letters?: string;   // Huruf terkait
+  ruleInfo?: TajweedLegendItem;
 }
 
 export interface TajweedLegendItem {
@@ -388,12 +389,13 @@ export function parseTajweed(text: string): TajweedToken[] {
 function parseTajweedHeuristic(text: string): TajweedToken[] {
   const tokens: TajweedToken[] = [];
   // Regex to detect common Tajweed patterns:
-  // 1. Ghunnah: Nun or Mim with shaddah (نّ, مّ)
-  // 2. Qalqalah: ق, ط, ب, ج, د with sukun (ْ)
-  // 3. Mad: letters with maddah (ٓ)
-  // 4. Iqlab: small mim (ۢ, ۭ)
-  // 5. Hamzah wasl (ٱ)
-  const regex = /(ٱ|[نمّ]ّ|[قطبجد]ْ|[\u0600-\u06FF]*ٓ[\u0600-\u06FF]*|[ۭۢ])/g;
+  // 1. Hamzah wasl: ٱ
+  // 2. Ghunnah: Nun or Mim with shaddah (نّ, مّ, with or without harakat)
+  // 3. Mad: letters with maddah (ٓ, ۦٓ, ۥٓ, or آ)
+  // 4. Mad Thobi'i: dagger alif (ٰ)
+  // 5. Qalqalah: ق, ط, ب, ج, د with sukun (ْ, \u0652)
+  // 6. Iqlab: small mim (ۢ, ۭ)
+  const regex = /(ٱ|[نم](?:[\u064B-\u0650\u0670]?)\u0651|\u0651[نم]|[^\s\u0600-\u061F]*[\u0622\u0653\u06E6\u06E5ٓ~][^\s]*|[قطبجد][ْ\u0652]|[\u0670]|ـٰ|[ۭۢ])/g;
   let lastIdx = 0;
   let m: RegExpExecArray | null;
 
@@ -414,7 +416,7 @@ function parseTajweedHeuristic(text: string): TajweedToken[] {
         duration: '0 Harakat',
         letters: 'ٱ',
       });
-    } else if (matched.includes('ٓ')) {
+    } else if (matched.includes('ٓ') || matched.includes('~') || matched.includes('آ') || matched.includes('\u0622') || matched.includes('\u0653')) {
       tokens.push({
         text: matched,
         type: 'mad',
@@ -423,7 +425,7 @@ function parseTajweedHeuristic(text: string): TajweedToken[] {
         description: 'Panjang 4 hingga 5 harakat',
         howToRead: 'Panjangkan suara secara mantap selama 4 sampai 5 harakat karena tanda mad bertemu Hamzah.',
         duration: '4 - 5 Harakat',
-        letters: 'Tanda Mad (ٓ)',
+        letters: 'Tanda Mad (ٓ / آ)',
       });
     } else if (matched.includes('ّ') && (matched.includes('ن') || matched.includes('م'))) {
       tokens.push({
@@ -436,7 +438,18 @@ function parseTajweedHeuristic(text: string): TajweedToken[] {
         duration: '2 Harakat',
         letters: 'نّ - مّ',
       });
-    } else if (matched.includes('ْ') && /[قطبجد]/.test(matched)) {
+    } else if (matched.includes('ٰ') || matched.includes('\u0670') || matched === 'ـٰ') {
+      tokens.push({
+        text: matched,
+        type: 'mad_thobii',
+        colorClass: 'text-orange-600 font-semibold',
+        ruleName: 'Mad Thabi\'i (Panjang 2 Harakat)',
+        description: 'Panjang wajar 2 harakat',
+        howToRead: 'Panjangkan suara huruf tepat 2 harakat (1 alif / 2 ketukan) secara mengalir tanpa dilebihkan.',
+        duration: '2 Harakat',
+        letters: 'ٰ (Alif Khanjariyyah)',
+      });
+    } else if (/[قطبجد]/.test(matched) && (matched.includes('ْ') || matched.includes('\u0652'))) {
       tokens.push({
         text: matched,
         type: 'qalqalah',

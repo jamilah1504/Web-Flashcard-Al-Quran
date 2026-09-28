@@ -1,27 +1,36 @@
 import React, { useMemo, useState } from 'react';
-import { parseTajweed, TajweedToken, TajweedRuleType } from '../utils/tajweedHelper';
+import { parseTajweed, TajweedToken, TajweedRuleType, TAJWEED_MAP } from '../utils/tajweedHelper';
 
 interface TajweedTextProps {
-  text: string;
+  text?: string;
+  textWithTags?: string;
   tajweedText?: string;
   showTajweed?: boolean;
   className?: string;
   onRuleClick?: (ruleType: TajweedRuleType) => void;
+  onSelectRule?: (ruleType: TajweedRuleType) => void;
 }
 
 export const TajweedText: React.FC<TajweedTextProps> = ({
-  text,
+  text = '',
+  textWithTags,
   tajweedText,
   showTajweed = true,
   className = '',
   onRuleClick,
+  onSelectRule,
 }) => {
   const [activeTooltipIndex, setActiveTooltipIndex] = useState<number | null>(null);
 
+  const effectiveText = text || textWithTags || '';
+  const effectiveTajweed = tajweedText || textWithTags || effectiveText;
+
+  const handleRuleClick = onRuleClick || onSelectRule;
+
   const tokens: TajweedToken[] = useMemo(() => {
-    if (!showTajweed) return [{ text, type: 'normal' }];
-    return parseTajweed(tajweedText || text);
-  }, [text, tajweedText, showTajweed]);
+    if (!showTajweed) return [{ text: effectiveText, type: 'normal' }];
+    return parseTajweed(effectiveTajweed || effectiveText);
+  }, [effectiveText, effectiveTajweed, showTajweed]);
 
   if (!showTajweed || tokens.length === 0) {
     return (
@@ -30,7 +39,7 @@ export const TajweedText: React.FC<TajweedTextProps> = ({
         lang="ar"
         className={`font-arabic leading-[2.2] select-text tracking-wide ${className}`}
       >
-        {text}
+        {effectiveText}
       </span>
     );
   }
@@ -47,6 +56,7 @@ export const TajweedText: React.FC<TajweedTextProps> = ({
         }
 
         const isTooltipActive = activeTooltipIndex === index;
+        const ruleInfo = token.ruleInfo || (token.type ? TAJWEED_MAP.get(token.type) : undefined);
 
         return (
           <span
@@ -59,41 +69,31 @@ export const TajweedText: React.FC<TajweedTextProps> = ({
               className={`${token.colorClass} transition-all duration-200 cursor-help px-0.5 rounded-sm hover:underline hover:brightness-90`}
               onClick={(e) => {
                 e.stopPropagation();
-                setActiveTooltipIndex((prev) => (prev === index ? null : index));
-                if (token.type && onRuleClick) {
-                  onRuleClick(token.type);
+                if (ruleInfo && handleRuleClick) {
+                  handleRuleClick(ruleInfo.id);
                 }
               }}
+              title={ruleInfo ? `${ruleInfo.name}: ${ruleInfo.howToRead}` : undefined}
             >
               {token.text}
             </span>
 
-            {/* Interactive Floating Callout / Tooltip */}
-            {isTooltipActive && token.ruleName && (
+            {/* Hover Tooltip Card */}
+            {isTooltipActive && ruleInfo && (
               <span
                 dir="ltr"
-                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-40 w-52 sm:w-64 p-2.5 bg-slate-900/95 text-white text-xs rounded-xl shadow-2xl backdrop-blur-md border border-slate-700 pointer-events-auto text-left font-sans animate-fadeIn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (token.type && onRuleClick) {
-                    onRuleClick(token.type);
-                  }
-                }}
+                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 p-2.5 rounded-xl bg-white text-slate-800 border border-amber-200 shadow-xl z-30 pointer-events-none text-left animate-fadeIn block ring-1 ring-black/5"
               >
-                <span className="block font-bold text-amber-300 text-xs border-b border-slate-700 pb-1 mb-1">
-                  🏷️ {token.ruleName}
+                <span className="font-bold flex items-center gap-1.5 text-amber-900 text-xs">
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ backgroundColor: ruleInfo.colorHex }}
+                  />
+                  <span>{ruleInfo.name}</span>
                 </span>
-                <span className="block text-slate-200 text-[11px] leading-relaxed">
-                  <strong className="text-white">Cara baca: </strong>
-                  {token.howToRead || token.description}
+                <span className="text-[11px] text-slate-600 block mt-1 leading-snug">
+                  {ruleInfo.howToRead}
                 </span>
-                {token.duration && (
-                  <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 bg-slate-800 rounded-md text-amber-200">
-                    ⏱️ {token.duration}
-                  </span>
-                )}
-                {/* Arrow pointer */}
-                <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
               </span>
             )}
           </span>

@@ -438,6 +438,11 @@ export default function App() {
   });
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const pendingTargetAyahRef = useRef<{
+    surahNumber?: number;
+    ayahNumber?: number;
+    globalAyahNumber?: number;
+  } | null>(null);
 
   // Modals state
   const [isSelectorOpen, setIsSelectorOpen] = useState<boolean>(false);
@@ -559,10 +564,43 @@ export default function App() {
       if (!isMounted) return;
       setAyahs(res.ayahs);
       setIsLoading(false);
-      setCurrentIndex(0);
       setIsFlipped(false);
       setIsShuffled(false);
       setShuffledIndices([]);
+
+      if (pendingTargetAyahRef.current) {
+        const pending = pendingTargetAyahRef.current;
+        pendingTargetAyahRef.current = null;
+
+        let targetIndex = -1;
+        if (pending.surahNumber !== undefined && pending.ayahNumber !== undefined) {
+          targetIndex = res.ayahs.findIndex(
+            (a) => a.surah.number === pending.surahNumber && a.numberInSurah === pending.ayahNumber
+          );
+        } else if (pending.globalAyahNumber !== undefined) {
+          targetIndex = res.ayahs.findIndex(
+            (a) => a.number === pending.globalAyahNumber
+          );
+        }
+
+        const finalIdx = targetIndex !== -1 ? targetIndex : 0;
+        setCurrentIndex(finalIdx);
+
+        // Smooth scroll to that ayah in Mushaf view
+        setTimeout(() => {
+          const found = res.ayahs[finalIdx];
+          if (found) {
+            const el = document.getElementById(`mushaf-ayah-${found.number}`);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              el.classList.add('ring-4', 'ring-pink-400');
+              setTimeout(() => el.classList.remove('ring-4', 'ring-pink-400'), 2500);
+            }
+          }
+        }, 200);
+      } else {
+        setCurrentIndex(0);
+      }
 
       if (res.error) {
         setErrorMessage(res.error);
@@ -650,7 +688,7 @@ export default function App() {
 
   // Jump to specific Surah and Ayah
   const handleSelectSurahAndAyah = useCallback(
-    async (surahNumber: number, ayahNumber: number) => {
+    (surahNumber: number, ayahNumber: number) => {
       const targetPage = getPageForSurahAndAyah(surahNumber, ayahNumber);
       setIsSelectorOpen(false);
 
@@ -678,79 +716,40 @@ export default function App() {
         return;
       }
 
+      pendingTargetAyahRef.current = { surahNumber, ayahNumber };
       setIsLoading(true);
       setCurrentPage(targetPage);
-      try {
-        const result = await fetchAyahsForPage(targetPage, hintMode);
-        setAyahs(result.ayahs);
-        setIsShuffled(false);
-        setShuffledIndices([]);
-        const targetIndex = result.ayahs.findIndex(
-          (a) => a.surah.number === surahNumber && a.numberInSurah === ayahNumber
-        );
-        setCurrentIndex(targetIndex !== -1 ? targetIndex : 0);
-        setIsFlipped(false);
-        if (result.error) setErrorMessage(result.error);
-
-        // If on Mushaf view, scroll to that ayah after loading new page
-        setTimeout(() => {
-          const found = result.ayahs.find(
-            (a) => a.surah.number === surahNumber && a.numberInSurah === ayahNumber
-          );
-          if (found) {
-            const el = document.getElementById(`mushaf-ayah-${found.number}`);
-            if (el) {
-              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              el.classList.add('ring-4', 'ring-pink-400');
-              setTimeout(() => el.classList.remove('ring-4', 'ring-pink-400'), 2500);
-            }
-          }
-        }, 350);
-      } catch (err: any) {
-        setErrorMessage(err.message || 'Gagal memuat ayat');
-      } finally {
-        setIsLoading(false);
-      }
     },
-    [currentPage, ayahs, hintMode]
+    [currentPage, ayahs]
   );
 
   // Jump callback from Dashboard
   const handleNavigateFromDashboard = useCallback(
-    async (page: number, ayahNumber: number, targetView: ActiveView) => {
+    (page: number, ayahNumber: number, targetView: ActiveView) => {
       setActiveView(targetView);
       if (page !== currentPage) {
+        pendingTargetAyahRef.current = { globalAyahNumber: ayahNumber };
         setIsLoading(true);
         setCurrentPage(page);
-        try {
-          const result = await fetchAyahsForPage(page, hintMode);
-          setAyahs(result.ayahs);
-          const targetIndex = result.ayahs.findIndex((a) => a.number === ayahNumber);
-          setCurrentIndex(targetIndex !== -1 ? targetIndex : 0);
-          setIsFlipped(false);
-        } catch (e) {
-          console.warn('Navigation error:', e);
-        } finally {
-          setIsLoading(false);
-        }
       } else {
         const targetIndex = ayahs.findIndex((a) => a.number === ayahNumber);
         if (targetIndex !== -1) {
           setCurrentIndex(targetIndex);
           setIsFlipped(false);
         }
-      }
-
-      if (targetView === 'mushaf') {
-        setTimeout(() => {
-          const el = document.getElementById(`mushaf-ayah-${ayahNumber}`);
-          if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        }, 400);
+        if (targetView === 'mushaf') {
+          setTimeout(() => {
+            const el = document.getElementById(`mushaf-ayah-${ayahNumber}`);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              el.classList.add('ring-4', 'ring-pink-400');
+              setTimeout(() => el.classList.remove('ring-4', 'ring-pink-400'), 2500);
+            }
+          }, 150);
+        }
       }
     },
-    [currentPage, ayahs, hintMode]
+    [currentPage, ayahs]
   );
 
   // Keyboard navigation for Flashcard view

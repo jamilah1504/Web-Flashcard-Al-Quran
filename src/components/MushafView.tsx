@@ -14,10 +14,10 @@ import {
   Search,
   X,
   ArrowRight,
-  CornerDownLeft,
-  Hash,
   Filter,
   CheckCircle2,
+  Minimize2,
+  Maximize2,
 } from 'lucide-react';
 import { Ayah, AyahStatusType, AyahStatusMap } from '../types';
 import { ThemeConfig } from '../utils/themeHelper';
@@ -66,7 +66,7 @@ const POPULAR_SEARCH_CHIPS = [
 ];
 
 export const MushafView: React.FC<MushafViewProps> = ({
-  ayahs,
+  ayahs = [],
   currentPage,
   currentJuz,
   themeConfig,
@@ -93,6 +93,9 @@ export const MushafView: React.FC<MushafViewProps> = ({
   const [arabicFontSize, setArabicFontSize] = useState<'md' | 'lg' | 'xl'>('lg');
   const [activeTajweedRules, setActiveTajweedRules] = useState<Record<number, TajweedRuleType | null>>({});
 
+  // Global Tajweed display mode: 'collapsed' | 'compact' | 'expanded'
+  const [tajweedGlobalMode, setTajweedGlobalMode] = useState<'collapsed' | 'compact' | 'expanded'>('compact');
+
   // Search State
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
@@ -101,7 +104,7 @@ export const MushafView: React.FC<MushafViewProps> = ({
 
   const searchContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const firstAyah = ayahs[0];
+  const firstAyah = ayahs && ayahs.length > 0 ? ayahs[0] : null;
   const surahInfo = firstAyah?.surah;
 
   // Close search dropdown on click outside
@@ -168,6 +171,35 @@ export const MushafView: React.FC<MushafViewProps> = ({
     }
     setIsSearchFocused(false);
     setSearchQuery('');
+  };
+
+  // Executes the search when user presses Enter or clicks 'Cari'
+  const handleExecuteSearch = () => {
+    const q = searchQuery.trim();
+    if (!q) return;
+
+    if (searchResults.specificVerseMatch) {
+      handleJumpToSurahAndAyah(
+        searchResults.specificVerseMatch.surah.number,
+        searchResults.specificVerseMatch.ayahNumber
+      );
+      return;
+    }
+
+    if (searchResults.pageMatch) {
+      handleJumpToPage(searchResults.pageMatch);
+      return;
+    }
+
+    if (searchResults.matchedSurahs.length > 0) {
+      handleJumpToSurahAndAyah(searchResults.matchedSurahs[0].number, 1);
+      return;
+    }
+
+    if (searchResults.currentPageMatches.length > 0) {
+      scrollToAyahOnCurrentPage(searchResults.currentPageMatches[0].ayah.number);
+      return;
+    }
   };
 
   // =========================================================================
@@ -288,6 +320,7 @@ export const MushafView: React.FC<MushafViewProps> = ({
 
   // Filtered verses to display on the page if user chose filterMode === 'currentPage'
   const displayAyahs = useMemo(() => {
+    if (!ayahs || ayahs.length === 0) return [];
     if (filterMode === 'currentPage' && searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       return ayahs.filter((ayah) => {
@@ -319,19 +352,36 @@ export const MushafView: React.FC<MushafViewProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setIsSearchFocused(true)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleExecuteSearch();
+                }
+              }}
               placeholder="Cari surat (misal: Al-Kahf, Yasin) atau nomor ayat (misal: 2:255, 18:10), atau kata..."
-              className="w-full pl-10 pr-9 py-2.5 rounded-2xl bg-slate-50/90 hover:bg-slate-100/80 focus:bg-white border border-slate-200/90 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-pink-300 focus:border-pink-400 transition-all"
+              className="w-full pl-10 pr-24 py-2.5 rounded-2xl bg-slate-50/90 hover:bg-slate-100/80 focus:bg-white border border-slate-200/90 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-pink-300 focus:border-pink-400 transition-all"
             />
-            {searchQuery && (
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="w-6 h-6 rounded-full bg-slate-200/80 hover:bg-slate-300 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
+                  title="Hapus pencarian"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => setSearchQuery('')}
-                className="w-6 h-6 rounded-full bg-slate-200/80 hover:bg-slate-300 text-slate-600 flex items-center justify-center absolute right-2.5 top-1/2 -translate-y-1/2 transition-colors cursor-pointer"
-                title="Hapus pencarian"
+                onClick={handleExecuteSearch}
+                className="px-2.5 py-1 rounded-xl bg-pink-500 hover:bg-pink-600 text-white text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
+                title="Cari atau buka surat/ayat yang diketik"
               >
-                <X className="w-3.5 h-3.5" />
+                <span>Cari</span>
+                <ArrowRight className="w-3 h-3" />
               </button>
-            )}
+            </div>
           </div>
 
           {/* Filter Scope Button: Semua Surat vs Halaman Ini */}
@@ -562,7 +612,7 @@ export const MushafView: React.FC<MushafViewProps> = ({
               setFilterMode('all');
               setSearchQuery('');
             }}
-            className="px-2.5 py-1 rounded-xl bg-white text-pink-700 font-bold border border-pink-200 hover:bg-pink-100 transition-colors shrink-0"
+            className="px-2.5 py-1 rounded-xl bg-white text-pink-700 font-bold border border-pink-200 hover:bg-pink-100 transition-colors shrink-0 cursor-pointer"
           >
             Tampilkan Semua Ayat
           </button>
@@ -570,9 +620,9 @@ export const MushafView: React.FC<MushafViewProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* 2. TOP MUSHAF CONTROLS BAR (JUZ, HALAMAN, TAJWID, LATIN, FONT SIZE)       */}
+      {/* 2. TOP MUSHAF CONTROLS BAR (JUZ, HALAMAN, TAJWID TOGGLE, LATIN, FONT)     */}
       {/* ========================================================================= */}
-      <div className="bg-white/90 backdrop-blur-md rounded-3xl p-3 sm:p-4 border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3 sticky top-16 z-20">
+      <div className="bg-white/90 backdrop-blur-md rounded-3xl p-3 sm:p-4 border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-2.5 sticky top-16 z-20">
         {/* Page & Juz Info Tag */}
         <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-800">
           <span className={`px-2.5 py-1 rounded-xl ${themeConfig.badgeBg} ${themeConfig.badgeText}`}>
@@ -586,33 +636,88 @@ export const MushafView: React.FC<MushafViewProps> = ({
 
         {/* View Options & Font Size */}
         <div className="flex items-center flex-wrap gap-2">
-          {/* Tajweed Toggle */}
-          <button
-            onClick={onToggleTajweed}
-            className={`px-2.5 py-1 rounded-xl text-xs font-medium border transition-colors flex items-center gap-1.5 cursor-pointer ${
-              showTajweed
-                ? 'bg-amber-500 text-white border-amber-600 shadow-xs'
-                : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-            }`}
-            title="Aktifkan atau nonaktifkan warna tajwid"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Tajwid {showTajweed ? 'ON' : 'OFF'}</span>
-          </button>
+          {/* Tajweed Controls: ON/OFF, Perkecil, Show Lengkapnya, Panduan */}
+          <div className="flex items-center flex-wrap gap-1.5 bg-amber-50/90 p-1 rounded-2xl border border-amber-200/90 shadow-2xs">
+            {/* Tajweed ON / OFF Toggle */}
+            <button
+              type="button"
+              onClick={onToggleTajweed}
+              className={`px-2.5 py-1 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 cursor-pointer ${
+                showTajweed
+                  ? 'bg-amber-100 text-amber-900 border-amber-300 font-bold shadow-2xs ring-1 ring-amber-300/60'
+                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+              }`}
+              title="Aktifkan atau nonaktifkan warna tajwid"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+              <span>Tajwid {showTajweed ? 'ON' : 'OFF'}</span>
+            </button>
 
-          {/* Guide info button */}
-          <button
-            onClick={onOpenTajweedModal}
-            className="p-1.5 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
-            title="Lihat Panduan Warna Tajwid"
-          >
-            <Info className="w-4 h-4 text-slate-500" />
-          </button>
+            {/* When Tajweed is ON: 3 distinct view controls */}
+            {showTajweed && (
+              <>
+                {/* 1. Perkecil Tajwid */}
+                <button
+                  type="button"
+                  onClick={() => setTajweedGlobalMode('collapsed')}
+                  className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer ${
+                    tajweedGlobalMode === 'collapsed'
+                      ? 'bg-amber-200/90 text-amber-950 font-bold shadow-2xs border border-amber-300 ring-1 ring-amber-300/60'
+                      : 'text-amber-900 bg-white/80 hover:bg-amber-100 border border-amber-200'
+                  }`}
+                  title="Perkecil semua kotak penjelasan tajwid menjadi baris mini"
+                >
+                  <Minimize2 className="w-3 h-3 text-amber-800" />
+                  <span>Perkecil Tajwid</span>
+                </button>
+
+                {/* 2. Perbesar Tajwid (Mode Kecil Dulu) */}
+                <button
+                  type="button"
+                  onClick={() => setTajweedGlobalMode('compact')}
+                  className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer ${
+                    tajweedGlobalMode === 'compact'
+                      ? 'bg-amber-200/90 text-amber-950 font-bold shadow-2xs border border-amber-300 ring-1 ring-amber-300/60'
+                      : 'text-amber-900 bg-white/80 hover:bg-amber-100 border border-amber-200'
+                  }`}
+                  title="Perbesar kartu tajwid (penjelasan dalam mode kecil dulu tanpa teks panjang)"
+                >
+                  <Maximize2 className="w-3 h-3 text-amber-800" />
+                  <span>Perbesar Tajwid</span>
+                </button>
+
+                {/* 3. Kalimat Penjelasan */}
+                <button
+                  type="button"
+                  onClick={() => setTajweedGlobalMode('expanded')}
+                  className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer ${
+                    tajweedGlobalMode === 'expanded'
+                      ? 'bg-amber-200/90 text-amber-950 font-bold shadow-2xs border border-amber-300 ring-1 ring-amber-300/60'
+                      : 'text-amber-900 bg-white/80 hover:bg-amber-100 border border-amber-200'
+                  }`}
+                  title="Munculkan seluruh kalimat uraian penjelasan cara membaca tajwid"
+                >
+                  <BookOpen className="w-3 h-3 text-amber-800" />
+                  <span>Kalimat Penjelasan</span>
+                </button>
+              </>
+            )}
+
+            {/* Guide info modal trigger */}
+            <button
+              type="button"
+              onClick={onOpenTajweedModal}
+              className="p-1 rounded-xl text-amber-800 hover:bg-amber-100 hover:text-amber-950 transition-colors cursor-pointer"
+              title="Lihat Panduan Warna Tajwid Lengkap"
+            >
+              <Info className="w-3.5 h-3.5" />
+            </button>
+          </div>
 
           {/* Latin Toggle */}
           <button
             onClick={onToggleLatin}
-            className={`px-2.5 py-1 rounded-xl text-xs font-medium border transition-colors flex items-center gap-1.5 cursor-pointer ${
+            className={`px-2.5 py-1 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 cursor-pointer ${
               showLatin
                 ? 'bg-indigo-600 text-white border-indigo-700 shadow-xs'
                 : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
@@ -661,8 +766,8 @@ export const MushafView: React.FC<MushafViewProps> = ({
         </div>
       </div>
 
-      {/* Surah Header Card if beginning of surah is on this page */}
-      {surahInfo && firstAyah.numberInSurah === 1 && (
+      {/* Surah Header Card if the first ayah starts a surah or to introduce current page's surah */}
+      {surahInfo && (firstAyah?.numberInSurah === 1 ? (
         <div
           className={`p-6 sm:p-8 rounded-3xl text-center bg-gradient-to-r ${themeConfig.accentGradient} text-white shadow-xl relative overflow-hidden`}
         >
@@ -680,7 +785,7 @@ export const MushafView: React.FC<MushafViewProps> = ({
             "{surahInfo.englishNameTranslation}"
           </p>
 
-          {/* Bismillah Header (except At-Taubah) */}
+          {/* Bismillah Header (except At-Taubah / Surah 9) */}
           {surahInfo.number !== 9 && (
             <div className="mt-5 pt-5 border-t border-white/20">
               <p className="font-arabic text-2xl sm:text-3xl text-white/95 leading-loose">
@@ -689,116 +794,183 @@ export const MushafView: React.FC<MushafViewProps> = ({
             </div>
           )}
         </div>
-      )}
+      ) : (
+        /* Subtle Surah introduction strip if page continues an existing surah */
+        <div className="px-4 py-2.5 rounded-2xl bg-white/80 border border-slate-200/80 shadow-2xs flex items-center justify-between text-xs text-slate-600">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-slate-800">
+              Surah {surahInfo.englishName}
+            </span>
+            <span className="text-slate-400">({surahInfo.name})</span>
+            <span className="text-slate-300">·</span>
+            <span className="text-slate-500">
+              {surahInfo.revelationType === 'Meccan' ? 'Makkiyyah' : 'Madaniyyah'} · {surahInfo.numberOfAyahs} Ayat
+            </span>
+          </div>
+          <span className="font-medium text-slate-400">
+            Hal. {currentPage}
+          </span>
+        </div>
+      ))}
 
-      {/* Verses Container */}
-      <div className="space-y-4">
-        {displayAyahs.map((ayah) => {
-          const userStatus = statusMap[ayah.number];
-          const isThisPlaying = isPlayingAudio && playingAyahNumber === ayah.number;
-          const isMemorized = !!userStatus?.isMemorized;
-          const isHighlighted = highlightedAyahNumber === ayah.number;
-          const parsedTokens = parseTajweed(ayah.tajweedText || ayah.text);
-
-          return (
-            <div
-              key={ayah.number}
-              id={`mushaf-ayah-${ayah.number}`}
-              data-surah-num={ayah.surah.number}
-              data-ayah-num={ayah.numberInSurah}
-              className={`p-4 sm:p-6 rounded-3xl border transition-all duration-300 bg-white ${
-                isHighlighted
-                  ? 'ring-4 ring-pink-400 bg-pink-50/50 shadow-lg scale-[1.008]'
-                  : isMemorized
-                  ? 'border-emerald-300 bg-gradient-to-r from-emerald-50/30 to-white shadow-md'
-                  : 'border-slate-200/80 hover:border-slate-300 shadow-xs'
-              }`}
+      {/* ========================================================================= */}
+      {/* 3. VERSES CONTAINER (DAFTAR AYAT UTUH)                                    */}
+      {/* ========================================================================= */}
+      {displayAyahs.length === 0 ? (
+        <div className="p-12 text-center rounded-3xl bg-white/80 border border-dashed border-slate-200 text-slate-400 space-y-3">
+          <BookOpen className="w-10 h-10 mx-auto text-slate-300" />
+          <p className="text-sm font-semibold text-slate-600">
+            {searchQuery
+              ? `Tidak ada ayat pada Halaman ${currentPage} yang cocok dengan "${searchQuery}".`
+              : 'Tidak ada ayat ditemukan di halaman ini.'}
+          </p>
+          {searchQuery && (
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setFilterMode('all');
+              }}
+              className="px-4 py-2 rounded-2xl bg-pink-50 text-pink-700 font-bold text-xs hover:bg-pink-100 transition-colors cursor-pointer"
             >
-              {/* Ayah Header Strip */}
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5 mb-3">
-                {/* Ayah Number Badge */}
-                <div className="flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200/80 flex items-center justify-center font-bold text-xs text-slate-700">
-                    {ayah.numberInSurah}
-                  </span>
-                  <span className="text-xs font-semibold text-slate-600">
-                    {ayah.surah.englishName} : Ayat {ayah.numberInSurah}
-                  </span>
+              Reset Pencarian
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {displayAyahs.map((ayah) => {
+            const userStatus = statusMap[ayah.number];
+            const isThisPlaying = isPlayingAudio && playingAyahNumber === ayah.number;
+            const isMemorized = !!userStatus?.isMemorized;
+            const isHighlighted = highlightedAyahNumber === ayah.number;
+            const parsedTokens = parseTajweed(ayah.tajweedText || ayah.text);
+
+            return (
+              <div
+                key={ayah.number}
+                id={`mushaf-ayah-${ayah.number}`}
+                data-surah-num={ayah.surah.number}
+                data-ayah-num={ayah.numberInSurah}
+                className={`p-4 sm:p-6 rounded-3xl border transition-all duration-300 bg-white ${
+                  isHighlighted
+                    ? 'ring-4 ring-pink-400 bg-pink-50/50 shadow-lg scale-[1.008]'
+                    : isMemorized
+                    ? 'border-emerald-300 bg-gradient-to-r from-emerald-50/30 to-white shadow-md'
+                    : 'border-slate-200/80 hover:border-slate-300 shadow-xs'
+                }`}
+              >
+                {/* Surah Header Card if a new surah starts on this verse (e.g. on multi-surah pages like Juz 30) */}
+                {ayah.numberInSurah === 1 && ayah.number !== firstAyah?.number && (
+                  <div
+                    className={`mb-5 p-5 sm:p-6 rounded-2xl text-center bg-gradient-to-r ${themeConfig.accentGradient} text-white shadow-md relative overflow-hidden`}
+                  >
+                    <p className="text-[11px] uppercase tracking-widest font-semibold opacity-85 mb-0.5">
+                      {ayah.surah.revelationType === 'Meccan' ? 'Makkiyyah' : 'Madaniyyah'} · {ayah.surah.numberOfAyahs} Ayat
+                    </p>
+                    <h3 className="font-arabic text-2xl sm:text-3xl font-bold mb-1">
+                      {ayah.surah.name}
+                    </h3>
+                    <h4 className="font-display text-base sm:text-lg font-bold">
+                      Surah {ayah.surah.englishName}
+                    </h4>
+
+                    {ayah.surah.number !== 9 && (
+                      <div className="mt-3 pt-3 border-t border-white/20">
+                        <p className="font-arabic text-xl sm:text-2xl text-white/95 leading-loose">
+                          بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Ayah Header Strip */}
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5 mb-3">
+                  {/* Ayah Number Badge */}
+                  <div className="flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200/80 flex items-center justify-center font-bold text-xs text-slate-700">
+                      {ayah.numberInSurah}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-600">
+                      {ayah.surah.englishName} : Ayat {ayah.numberInSurah}
+                    </span>
+                  </div>
+
+                  {/* Actions & Status Controls */}
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <StatusButtons
+                      ayah={ayah}
+                      status={userStatus}
+                      onToggleStatus={onToggleStatus}
+                      size="sm"
+                      showLabels={false}
+                    />
+
+                    {/* Audio Play Button */}
+                    <button
+                      onClick={() => {
+                        if (isThisPlaying) {
+                          onStopAudio();
+                        } else {
+                          onPlayAyahAudio(ayah);
+                        }
+                      }}
+                      disabled={isAudioLoading && playingAyahNumber === ayah.number}
+                      className={`p-1.5 sm:p-2 rounded-xl border text-xs font-medium transition-colors flex items-center gap-1 cursor-pointer ${
+                        isThisPlaying
+                          ? 'bg-rose-500 text-white border-rose-600 shadow-xs'
+                          : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                      }`}
+                      title={isThisPlaying ? 'Hentikan Audio' : 'Dengarkan Murottal'}
+                    >
+                      {isAudioLoading && playingAyahNumber === ayah.number ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : isThisPlaying ? (
+                        <Square className="w-3.5 h-3.5 fill-current" />
+                      ) : (
+                        <Volume2 className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+
+                    {/* Switch to Flashcard Mode with this verse */}
+                    <button
+                      onClick={() => {
+                        const idx = ayahs.findIndex((a) => a.number === ayah.number);
+                        onSwitchToFlashcardWithAyah(idx !== -1 ? idx : 0);
+                      }}
+                      className="p-1.5 sm:p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-medium transition-colors flex items-center gap-1 cursor-pointer"
+                      title="Hafalkan ayat ini di Flashcard"
+                    >
+                      <Layers className="w-3.5 h-3.5 text-pink-600" />
+                      <span className="hidden sm:inline">Hafalkan</span>
+                    </button>
+
+                    {/* Copy Button */}
+                    <button
+                      onClick={() => handleCopyAyah(ayah)}
+                      className="p-1.5 sm:p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-800 border border-slate-200 transition-colors cursor-pointer"
+                      title="Salin ayat & terjemahan"
+                    >
+                      {copiedAyahNumber === ayah.number ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
-                {/* Actions & Status Controls */}
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <StatusButtons
-                    ayah={ayah}
-                    status={userStatus}
-                    onToggleStatus={onToggleStatus}
-                    size="sm"
-                    showLabels={false}
-                  />
-
-                  {/* Audio Play Button */}
-                  <button
-                    onClick={() => {
-                      if (isThisPlaying) {
-                        onStopAudio();
-                      } else {
-                        onPlayAyahAudio(ayah);
-                      }
-                    }}
-                    disabled={isAudioLoading && playingAyahNumber === ayah.number}
-                    className={`p-1.5 sm:p-2 rounded-xl border text-xs font-medium transition-colors flex items-center gap-1 cursor-pointer ${
-                      isThisPlaying
-                        ? 'bg-rose-500 text-white border-rose-600 shadow-xs'
-                        : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                    }`}
-                    title={isThisPlaying ? 'Hentikan Audio' : 'Dengarkan Murottal'}
+                {/* Arabic Text Display */}
+                <div className="text-right py-2 px-1">
+                  <div
+                    className={`font-arabic text-slate-900 leading-loose transition-all duration-150 ${getFontSizeClass()}`}
+                    dir="rtl"
                   >
-                    {isAudioLoading && playingAyahNumber === ayah.number ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : isThisPlaying ? (
-                      <Square className="w-3.5 h-3.5 fill-current" />
-                    ) : (
-                      <Volume2 className="w-3.5 h-3.5" />
-                    )}
-                  </button>
-
-                  {/* Switch to Flashcard Mode with this verse */}
-                  <button
-                    onClick={() => {
-                      const idx = ayahs.findIndex((a) => a.number === ayah.number);
-                      onSwitchToFlashcardWithAyah(idx !== -1 ? idx : 0);
-                    }}
-                    className="p-1.5 sm:p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-medium transition-colors flex items-center gap-1 cursor-pointer"
-                    title="Hafalkan ayat ini di Flashcard"
-                  >
-                    <Layers className="w-3.5 h-3.5 text-pink-600" />
-                    <span className="hidden sm:inline">Hafalkan</span>
-                  </button>
-
-                  {/* Copy Button */}
-                  <button
-                    onClick={() => handleCopyAyah(ayah)}
-                    className="p-1.5 sm:p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-800 border border-slate-200 transition-colors cursor-pointer"
-                    title="Salin ayat & terjemahan"
-                  >
-                    {copiedAyahNumber === ayah.number ? (
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    ) : (
-                      <Copy className="w-3.5 h-3.5" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Arabic Text Display */}
-              <div className="text-right py-2 px-1">
-                <div
-                  className={`font-arabic text-slate-900 leading-loose transition-all duration-150 ${getFontSizeClass()}`}
-                  dir="rtl"
-                >
-                  {showTajweed && ayah.tajweedText ? (
+                    {/* Reliably renders TajweedText with full text fallback */}
                     <TajweedText
-                      textWithTags={ayah.tajweedText}
+                      text={ayah.text}
+                      tajweedText={ayah.tajweedText}
+                      showTajweed={showTajweed}
                       onSelectRule={(rule) =>
                         setActiveTajweedRules((prev) => ({
                           ...prev,
@@ -806,56 +978,55 @@ export const MushafView: React.FC<MushafViewProps> = ({
                         }))
                       }
                     />
-                  ) : (
-                    <span>{ayah.text}</span>
-                  )}
-                  {/* Arabic Number Ornament */}
-                  <span className="inline-flex items-center justify-center font-arabic text-pink-600 mx-2 text-xl align-middle select-none">
-                    ۝{toArabicNumerals(ayah.numberInSurah)}
+                    {/* Arabic Verse Number Ornament */}
+                    <span className="inline-flex items-center justify-center font-arabic text-pink-600 mx-2 text-xl align-middle select-none">
+                      ۝{toArabicNumerals(ayah.numberInSurah)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Latin Transliteration */}
+                {showLatin && ayah.latin && (
+                  <div className="mt-3 p-3 rounded-2xl bg-indigo-50/50 border border-indigo-100 text-indigo-950 text-xs sm:text-sm font-medium leading-relaxed">
+                    <span className="text-[10px] uppercase font-bold text-indigo-500 block mb-0.5">
+                      Transliterasi Latin:
+                    </span>
+                    {ayah.latin}
+                  </div>
+                )}
+
+                {/* Indonesian Translation */}
+                <div className="mt-2.5 p-3 rounded-2xl bg-slate-50/80 border border-slate-100 text-xs sm:text-sm text-slate-700 leading-relaxed italic">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 not-italic block mb-0.5">
+                    Terjemahan:
                   </span>
+                  "{ayah.translation}"
                 </div>
+
+                {/* Tajweed Explainer Card with Perkecil & Show Lengkapnya Buttons */}
+                {showTajweed && (
+                  <div className="mt-3">
+                    <AyahTajweedExplainer
+                      tokens={parsedTokens}
+                      forceCollapsed={tajweedGlobalMode === 'collapsed'}
+                      forceExpanded={tajweedGlobalMode === 'compact' || tajweedGlobalMode === 'expanded'}
+                      forceExplanationsExpanded={tajweedGlobalMode === 'expanded'}
+                      selectedRuleType={activeTajweedRules[ayah.number] || null}
+                      onSelectRule={(rule) =>
+                        setActiveTajweedRules((prev) => ({
+                          ...prev,
+                          [ayah.number]: rule,
+                        }))
+                      }
+                      onOpenFullModal={onOpenTajweedModal}
+                    />
+                  </div>
+                )}
               </div>
-
-              {/* Latin Transliteration */}
-              {showLatin && ayah.latin && (
-                <div className="mt-3 p-3 rounded-2xl bg-indigo-50/50 border border-indigo-100 text-indigo-950 text-xs sm:text-sm font-medium leading-relaxed">
-                  <span className="text-[10px] uppercase font-bold text-indigo-500 block mb-0.5">
-                    Transliterasi Latin:
-                  </span>
-                  {ayah.latin}
-                </div>
-              )}
-
-              {/* Indonesian Translation */}
-              <div className="mt-2.5 p-3 rounded-2xl bg-slate-50/80 border border-slate-100 text-xs sm:text-sm text-slate-700 leading-relaxed italic">
-                <span className="text-[10px] uppercase font-bold text-slate-400 not-italic block mb-0.5">
-                  Terjemahan:
-                </span>
-                "{ayah.translation}"
-              </div>
-
-              {/* Tajweed Explainer Card */}
-              {showTajweed && (
-                <div className="mt-3">
-                  <AyahTajweedExplainer
-                    tokens={parsedTokens}
-                    themeConfig={themeConfig}
-                    selectedRuleType={activeTajweedRules[ayah.number] || null}
-                    onSelectRule={(rule) =>
-                      setActiveTajweedRules((prev) => ({
-                        ...prev,
-                        [ayah.number]: rule,
-                      }))
-                    }
-                    onOpenFullModal={onOpenTajweedModal}
-                    compact
-                  />
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Bottom Page Navigation Controls */}
       <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/80 shadow-sm flex flex-wrap items-center justify-between gap-3">
