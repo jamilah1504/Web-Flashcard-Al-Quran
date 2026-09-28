@@ -2,8 +2,8 @@
 
 @theme {
   --font-arabic: 'Amiri', 'Scheherazade New', 'Traditional Arabic', serif;
-  --font-display: 'Quicksand', 'Plus Jakarta Sans', sans-serif;
-  --font-sans: 'Plus Jakarta Sans', 'Quicksand', system-ui, sans-serif;
+  --font-display: 'Poppins', 'Quicksand', 'Plus Jakarta Sans', sans-serif;
+  --font-sans: 'Poppins', 'Plus Jakarta Sans', 'Quicksand', system-ui, sans-serif;
 }
 
 /* Custom 3D Card Flip Styles with Full WebKit/iOS Compatibility */

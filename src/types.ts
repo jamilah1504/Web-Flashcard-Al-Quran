@@ -36,7 +36,29 @@ export type HintLength = 'short' | 'medium' | 'full';
 
 export type AppTheme = 'blossom' | 'ocean' | 'sage';
 
-export type ActiveView = 'flashcard' | 'mushaf';
+export type ActiveView = 'flashcard' | 'mushaf' | 'calendar' | 'dashboard';
+
+export type ScheduleActivityType = 'Setoran' | 'Muroja\'ah' | 'Tartil' | 'Hafalan Baru';
+export type ScheduleStatus = 'Belum' | 'Selesai';
+
+export interface ScheduleItem {
+  id: string;
+  date: string; // YYYY-MM-DD
+  activityType: ScheduleActivityType;
+  target: string;
+  notes?: string;
+  status: ScheduleStatus;
+  createdAt: string;
+  completedAt?: string;
+}
+
+export interface GoogleSheetSyncState {
+  scriptUrl: string;
+  isSyncing: boolean;
+  lastSyncedAt: string | null;
+  syncError: string | null;
+  isConfigured: boolean;
+}
 
 export type AyahStatusType = 'favorite' | 'learning' | 'memorized';
 

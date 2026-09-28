@@ -12,6 +12,8 @@ import {
   Award,
   Flower2,
   CheckCircle,
+  Calendar,
+  FileSpreadsheet,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import {
@@ -22,17 +24,30 @@ import {
   AyahStatusType,
   AyahStatusMap,
   AyahUserStatus,
+  ScheduleItem,
+  ScheduleActivityType,
+  ScheduleStatus,
 } from './types';
 import { getJuzByPage } from './data/juzData';
 import { fetchAyahsForPage } from './services/quranApi';
 import { getPageForSurahAndAyah } from './data/quranMeta';
 import { getAyahAudioUrl, getFallbackAudioUrl } from './utils/quranHelper';
 import { THEMES, ThemeConfig } from './utils/themeHelper';
+import {
+  saveToSheet,
+  loadFromSheet,
+  isRealScriptConfigured,
+  LAST_SYNC_STORAGE_KEY,
+} from './services/googleSheetService';
+
 import { Header } from './components/Header';
 import { Flashcard } from './components/Flashcard';
 import { Controls } from './components/Controls';
 import { MushafView } from './components/MushafView';
+import { CalendarScheduleView } from './components/CalendarScheduleView';
+import { ProgressDashboardView } from './components/ProgressDashboardView';
 import { ProgressDashboardModal } from './components/ProgressDashboardModal';
+import { GoogleSheetsModal } from './components/GoogleSheetsModal';
 import { TajweedModal } from './components/TajweedModal';
 import { SelectorModal } from './components/SelectorModal';
 import { VerseGridModal } from './components/VerseGridModal';
@@ -40,6 +55,7 @@ import { FloralBackground } from './components/FloralBackground';
 import { SplashScreen } from './components/SplashScreen';
 
 const STATUS_STORAGE_KEY = 'hafalanku_ayah_statuses_v2';
+const SCHEDULES_STORAGE_KEY = 'hafalanku_schedules_v2';
 const OLD_MEMORIZED_STORAGE_KEY = 'tahfidz_memorized_ayahs_v1';
 const THEME_STORAGE_KEY = 'hafalanku_theme_v1';
 const LAST_PAGE_STORAGE_KEY = 'hafalanku_last_page_v1';
@@ -52,7 +68,7 @@ export default function App() {
   // 0. Splash / Loading Screen State
   const [showSplash, setShowSplash] = useState<boolean>(true);
 
-  // 1. Navigation & View Mode State
+  // 1. Navigation & View Mode State (4 Views)
   const [activeView, setActiveView] = useState<ActiveView>('flashcard');
 
   // 2. Theme State (3 soft aesthetic themes)
@@ -63,7 +79,7 @@ export default function App() {
         return saved;
       }
     } catch (e) {}
-    return 'blossom'; // Default theme
+    return 'blossom'; // Default theme: Blossom (Girly Pink)
   });
 
   const themeConfig: ThemeConfig = useMemo(() => {
@@ -144,7 +160,6 @@ export default function App() {
       if (saved) {
         return JSON.parse(saved);
       }
-      // Migration from old memorized list if exists
       const oldSaved = localStorage.getItem(OLD_MEMORIZED_STORAGE_KEY);
       if (oldSaved) {
         const oldObj = JSON.parse(oldSaved);
@@ -190,6 +205,136 @@ export default function App() {
     } catch (e) {}
   }, [currentPage]);
 
+  // 6. Calendar & Schedule State (Halaman 3)
+  const [schedules, setSchedules] = useState<ScheduleItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(SCHEDULES_STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {}
+
+    // Initial default beginner-friendly schedule items
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const tmr = new Date(Date.now() + 86400000);
+    const tmrStr = `${tmr.getFullYear()}-${String(tmr.getMonth() + 1).padStart(2, '0')}-${String(tmr.getDate()).padStart(2, '0')}`;
+
+    return [
+      {
+        id: 'sch-1',
+        date: todayStr,
+        activityType: 'Setoran',
+        target: "Setoran Surat An-Naba' ayat 1-15",
+        notes: "Perhatikan dengung (ghunnah) dan mad wajib muttashil",
+        status: 'Belum',
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 'sch-2',
+        date: todayStr,
+        activityType: "Muroja'ah",
+        target: "Muroja'ah Surat Al-Mulk ayat 1-30",
+        notes: "Dibaca tartil sebelum istirahat malam",
+        status: 'Selesai',
+        createdAt: new Date().toISOString(),
+        completedAt: new Date().toISOString(),
+      },
+      {
+        id: 'sch-3',
+        date: tmrStr,
+        activityType: 'Tartil',
+        target: 'Tartil 1 lembar Surah Al-Baqarah ba’da Subuh',
+        notes: 'Pahami terjemahan dan makna ayat',
+        status: 'Belum',
+        createdAt: new Date().toISOString(),
+      },
+    ];
+  });
+
+  // Save schedules to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(SCHEDULES_STORAGE_KEY, JSON.stringify(schedules));
+    } catch (e) {}
+  }, [schedules]);
+
+  // 7. Google Sheets Sync State
+  const [isGoogleSheetsModalOpen, setIsGoogleSheetsModalOpen] = useState<boolean>(false);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(LAST_SYNC_STORAGE_KEY);
+    } catch {
+      return null;
+    }
+  });
+
+  // Handle Full Manual Sync with Google Sheets
+  const handleTriggerFullSync = async () => {
+    setIsSyncing(true);
+    setSyncMessage(null);
+    try {
+      const res = await saveToSheet('SYNC_ALL', {
+        statuses: statusMap,
+        schedules: schedules,
+        dailyTarget: dailyTarget,
+      });
+
+      if (res.success) {
+        const now = new Date().toISOString();
+        setLastSyncedAt(now);
+        setSyncMessage(res.message);
+      } else {
+        setSyncMessage(`Perhatian: ${res.message}`);
+      }
+    } catch (err: any) {
+      setSyncMessage(err?.message || 'Gagal menyinkronkan data.');
+    } finally {
+      setIsSyncing(false);
+      setTimeout(() => setSyncMessage(null), 5000);
+    }
+  };
+
+  // Schedule Management Handlers (Auto sync to Google Sheets)
+  const handleAddSchedule = useCallback(
+    (newScheduleData: Omit<ScheduleItem, 'id' | 'createdAt'>) => {
+      const newItem: ScheduleItem = {
+        ...newScheduleData,
+        id: `sch-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        createdAt: new Date().toISOString(),
+      };
+      setSchedules((prev) => [newItem, ...prev]);
+
+      // Auto-save to Google Sheets
+      saveToSheet('ADD_SCHEDULE', newItem).catch((e) =>
+        console.warn('Auto-save schedule to sheet failed:', e)
+      );
+    },
+    []
+  );
+
+  const handleUpdateSchedule = useCallback((updatedItem: ScheduleItem) => {
+    setSchedules((prev) =>
+      prev.map((item) => (item.id === updatedItem.id ? updatedItem : item))
+    );
+
+    // Auto-save to Google Sheets
+    saveToSheet('UPDATE_SCHEDULE', updatedItem).catch((e) =>
+      console.warn('Auto-update schedule to sheet failed:', e)
+    );
+  }, []);
+
+  const handleDeleteSchedule = useCallback((id: string) => {
+    setSchedules((prev) => prev.filter((item) => item.id !== id));
+
+    // Auto-delete from Google Sheets
+    saveToSheet('DELETE_SCHEDULE', { id }).catch((e) =>
+      console.warn('Auto-delete schedule from sheet failed:', e)
+    );
+  }, []);
+
   // Daily Memorization Target State (Target Hafalan Harian)
   const [dailyTarget, setDailyTarget] = useState<number>(() => {
     try {
@@ -207,7 +352,7 @@ export default function App() {
     } catch (e) {}
   }, []);
 
-  // Toggle status for an Ayah
+  // Toggle status for an Ayah (Auto-sync to Google Sheets)
   const handleToggleStatus = useCallback((ayahItem: Ayah, type: AyahStatusType) => {
     setStatusMap((prev) => {
       const current = prev[ayahItem.number] || {
@@ -243,17 +388,20 @@ export default function App() {
         updated.isFavorite = !current.isFavorite;
       } else if (type === 'learning') {
         updated.isLearning = !current.isLearning;
-        // If set to learning, usually not yet memorized
         if (updated.isLearning) {
           updated.isMemorized = false;
         }
       } else if (type === 'memorized') {
         updated.isMemorized = !current.isMemorized;
-        // If mastered, remove from learning
         if (updated.isMemorized) {
           updated.isLearning = false;
         }
       }
+
+      // Automatically sync updated ayah status to Google Sheets
+      saveToSheet('UPDATE_STATUS', updated).catch((e) =>
+        console.warn('Auto-save ayah status to sheet failed:', e)
+      );
 
       return {
         ...prev,
@@ -277,7 +425,7 @@ export default function App() {
     } catch {}
   }, []);
 
-  // 6. Audio Playback State
+  // 8. Audio Playback State
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
   const [playingAyahNumber, setPlayingAyahNumber] = useState<number | null>(null);
   const [isAudioLoading, setIsAudioLoading] = useState<boolean>(false);
@@ -294,7 +442,6 @@ export default function App() {
   // Modals state
   const [isSelectorOpen, setIsSelectorOpen] = useState<boolean>(false);
   const [isGridOpen, setIsGridOpen] = useState<boolean>(false);
-  const [isDashboardOpen, setIsDashboardOpen] = useState<boolean>(false);
   const [isTajweedModalOpen, setIsTajweedModalOpen] = useState<boolean>(false);
   const [highlightTajweedRule, setHighlightTajweedRule] = useState<string | null>(null);
 
@@ -351,35 +498,36 @@ export default function App() {
       };
 
       audio.onerror = () => {
-        if (!hasTriedFallback && targetAyah) {
+        if (!hasTriedFallback) {
           hasTriedFallback = true;
-          console.warn('Primary audio failed, switching to backup reciter URL...');
           const fallbackUrl = getFallbackAudioUrl(
             targetAyah.surah.number,
             targetAyah.numberInSurah
           );
-          audio.src = fallbackUrl;
-          audio.load();
-          audio.play().catch((err) => {
-            console.warn('Backup audio playback error:', err);
-            stopAudio();
-          });
+          if (audioRef.current) {
+            audioRef.current.src = fallbackUrl;
+            audioRef.current.play().catch(() => {
+              stopAudio();
+            });
+          }
         } else {
           stopAudio();
         }
       };
 
-      audio.play().catch((err) => {
-        console.warn('Primary audio play request failed:', err);
-        if (!hasTriedFallback && targetAyah) {
+      audio.play().catch(() => {
+        if (!hasTriedFallback) {
           hasTriedFallback = true;
           const fallbackUrl = getFallbackAudioUrl(
             targetAyah.surah.number,
             targetAyah.numberInSurah
           );
-          audio.src = fallbackUrl;
-          audio.load();
-          audio.play().catch(() => stopAudio());
+          if (audioRef.current) {
+            audioRef.current.src = fallbackUrl;
+            audioRef.current.play().catch(() => {
+              stopAudio();
+            });
+          }
         } else {
           stopAudio();
         }
@@ -388,7 +536,6 @@ export default function App() {
     [isPlayingAudio, playingAyahNumber, isAudioMuted, stopAudio]
   );
 
-  // Toggle global mute/disable audio
   const handleToggleAudioMute = useCallback(() => {
     setIsAudioMuted((prev) => {
       const next = !prev;
@@ -516,6 +663,17 @@ export default function App() {
           setShuffledIndices([]);
           setCurrentIndex(targetIndex);
           setIsFlipped(false);
+
+          // If on Mushaf view, scroll to that ayah
+          setTimeout(() => {
+            const foundAyah = ayahs[targetIndex];
+            const el = document.getElementById(`mushaf-ayah-${foundAyah.number}`);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              el.classList.add('ring-4', 'ring-pink-400');
+              setTimeout(() => el.classList.remove('ring-4', 'ring-pink-400'), 2500);
+            }
+          }, 150);
         }
         return;
       }
@@ -533,6 +691,21 @@ export default function App() {
         setCurrentIndex(targetIndex !== -1 ? targetIndex : 0);
         setIsFlipped(false);
         if (result.error) setErrorMessage(result.error);
+
+        // If on Mushaf view, scroll to that ayah after loading new page
+        setTimeout(() => {
+          const found = result.ayahs.find(
+            (a) => a.surah.number === surahNumber && a.numberInSurah === ayahNumber
+          );
+          if (found) {
+            const el = document.getElementById(`mushaf-ayah-${found.number}`);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              el.classList.add('ring-4', 'ring-pink-400');
+              setTimeout(() => el.classList.remove('ring-4', 'ring-pink-400'), 2500);
+            }
+          }
+        }, 350);
       } catch (err: any) {
         setErrorMessage(err.message || 'Gagal memuat ayat');
       } finally {
@@ -568,7 +741,6 @@ export default function App() {
         }
       }
 
-      // If switching to Mushaf view, scroll smoothly to the ayah element
       if (targetView === 'mushaf') {
         setTimeout(() => {
           const el = document.getElementById(`mushaf-ayah-${ayahNumber}`);
@@ -599,36 +771,27 @@ export default function App() {
       } else if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault();
         handleToggleFlip();
-      } else if (e.key === 'm' || e.key === 'M') {
-        e.preventDefault();
-        if (currentAyah) {
-          handleToggleStatus(currentAyah, 'memorized');
-        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeView, handleNext, handlePrev, handleToggleFlip, handleToggleStatus, currentAyah]);
+  }, [activeView, handleNext, handlePrev, handleToggleFlip]);
 
-  // Stats calculation
-  const memorizedOnThisPage = useMemo(() => {
-    return ayahs.filter((a) => statusMap[a.number]?.isMemorized).length;
-  }, [ayahs, statusMap]);
+  // Aggregate statistics for header badge
+  const totalMemorizedAll = useMemo(() => {
+    return (Object.values(statusMap) as AyahUserStatus[]).filter((s) => s.isMemorized).length;
+  }, [statusMap]);
 
   const learningCount = useMemo(() => {
-    return (Object.values(statusMap) as AyahUserStatus[]).filter((i) => i.isLearning).length;
+    return (Object.values(statusMap) as AyahUserStatus[]).filter((s) => s.isLearning).length;
   }, [statusMap]);
 
   const favoriteCount = useMemo(() => {
-    return (Object.values(statusMap) as AyahUserStatus[]).filter((i) => i.isFavorite).length;
+    return (Object.values(statusMap) as AyahUserStatus[]).filter((s) => s.isFavorite).length;
   }, [statusMap]);
 
-  const totalMemorizedAll = useMemo(() => {
-    return (Object.values(statusMap) as AyahUserStatus[]).filter((i) => i.isMemorized).length;
-  }, [statusMap]);
-
-  // Today key and count for Daily Memorization Target
+  // Today's Date String
   const todayKey = useMemo(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -636,18 +799,24 @@ export default function App() {
 
   const todayMemorizedCount = useMemo(() => {
     return (Object.values(statusMap) as AyahUserStatus[]).filter(
-      (i) => i.isMemorized && i.updatedAt && i.updatedAt.startsWith(todayKey)
+      (item) => item.isMemorized && item.updatedAt && item.updatedAt.startsWith(todayKey)
     ).length;
   }, [statusMap, todayKey]);
 
-  const currentSurahName = currentAyah?.surah?.englishName;
+  // Current Surah name for header
+  const currentSurahName = useMemo(() => {
+    if (ayahs.length === 0) return undefined;
+    const names = Array.from(new Set(ayahs.map((a) => a.surah.englishName)));
+    if (names.length === 1) return names[0];
+    return `${names[0]} & ${names.length - 1} Surat Lain`;
+  }, [ayahs]);
 
-  // Simple compatibility map for VerseGridModal
-  const simpleMemorizedMap: Record<number, boolean> = useMemo(() => {
+  // Simple map for grid modal
+  const simpleMemorizedMap = useMemo(() => {
     const map: Record<number, boolean> = {};
-    for (const [key, val] of Object.entries(statusMap) as [string, AyahUserStatus][]) {
-      if (val.isMemorized) {
-        map[Number(key)] = true;
+    for (const [k, v] of Object.entries(statusMap) as [string, AyahUserStatus][]) {
+      if (v?.isMemorized) {
+        map[Number(k)] = true;
       }
     }
     return map;
@@ -680,7 +849,7 @@ export default function App() {
         className={`fixed top-1/3 -right-20 w-96 h-96 ${themeConfig.ambientGlow} rounded-full blur-3xl pointer-events-none`}
       />
 
-      {/* Top Header with Brand, Views, Theme Switcher & Status Badge */}
+      {/* Top Header with Multi-View, Brand, 3 Themes, Google Sheets & Stats */}
       <Header
         activeView={activeView}
         onChangeView={setActiveView}
@@ -696,16 +865,14 @@ export default function App() {
         favoriteCount={favoriteCount}
         onOpenSelector={() => setIsSelectorOpen(true)}
         onOpenGrid={() => setIsGridOpen(true)}
-        onOpenDashboard={() => setIsDashboardOpen(true)}
         onOpenTajweedModal={() => {
           setHighlightTajweedRule(null);
           setIsTajweedModalOpen(true);
         }}
+        onOpenGoogleSheets={() => setIsGoogleSheetsModalOpen(true)}
+        isSheetsConfigured={isRealScriptConfigured()}
         hintMode={hintMode}
         onChangeHintMode={(mode) => setHintMode(mode)}
-        isAudioMuted={isAudioMuted}
-        onToggleAudioMute={handleToggleAudioMute}
-        isPlayingAudio={isPlayingAudio}
         dailyTarget={dailyTarget}
         todayMemorizedCount={todayMemorizedCount}
       />
@@ -725,8 +892,37 @@ export default function App() {
           </div>
         )}
 
-        {/* Loading Spinner */}
-        {isLoading ? (
+        {/* Conditional Rendering for the 4 Multi-Views */}
+        {activeView === 'calendar' ? (
+          /* ========================================================= */
+          /* VIEW 3: KALENDER & JADWAL (SETORAN & MUROJA'AH)           */
+          /* ========================================================= */
+          <CalendarScheduleView
+            schedules={schedules}
+            onAddSchedule={handleAddSchedule}
+            onUpdateSchedule={handleUpdateSchedule}
+            onDeleteSchedule={handleDeleteSchedule}
+            themeConfig={themeConfig}
+            onOpenGoogleSheetsModal={() => setIsGoogleSheetsModalOpen(true)}
+            isSheetsConfigured={isRealScriptConfigured()}
+          />
+        ) : activeView === 'dashboard' ? (
+          /* ========================================================= */
+          /* VIEW 4: DASHBOARD PROGRESS & FAVORIT                      */
+          /* ========================================================= */
+          <ProgressDashboardView
+            statusMap={statusMap}
+            themeConfig={themeConfig}
+            onNavigateToAyah={handleNavigateFromDashboard}
+            onRemoveStatus={handleRemoveStatus}
+            onClearAllStatuses={handleClearAllStatuses}
+            dailyTarget={dailyTarget}
+            onChangeDailyTarget={handleUpdateDailyTarget}
+            onOpenGoogleSheetsModal={() => setIsGoogleSheetsModalOpen(true)}
+            isSheetsConfigured={isRealScriptConfigured()}
+          />
+        ) : isLoading ? (
+          /* Loading Spinner for Quran Views */
           <div className="w-full max-w-2xl mx-auto min-h-[420px] bg-white/80 backdrop-blur-md rounded-3xl border border-slate-200 shadow-xl p-8 flex flex-col items-center justify-center space-y-4">
             <div
               className={`w-12 h-12 rounded-full border-4 border-slate-200 border-t-current ${themeConfig.badgeText} animate-spin`}
@@ -801,9 +997,7 @@ export default function App() {
 
             {/* Beginner Helpful Guidance Strip */}
             <div className="max-w-2xl mx-auto p-3.5 sm:p-4 rounded-2xl bg-white/80 backdrop-blur-xs border border-slate-200/80 shadow-2xs flex items-start gap-3 text-xs text-slate-600">
-              <div
-                className={`p-2 rounded-xl shrink-0 ${themeConfig.badgeBg}`}
-              >
+              <div className={`p-2 rounded-xl shrink-0 ${themeConfig.badgeBg}`}>
                 <Flower2 className="w-4 h-4" />
               </div>
               <div className="flex-1">
@@ -813,7 +1007,7 @@ export default function App() {
                 <p className="text-slate-500 mt-0.5 leading-relaxed">
                   Lihat 2 kata awal sebagai pancingan ingatan, sambungkan kelanjutan ayat dalam hati, lalu ketuk kartu untuk memeriksa keakuratan lafal, harakat tajwid, dan artinya.
                   <br />
-                  Gunakan tombol 📌 Favorit, ⏳ Sedang Dihafal, atau ✅ Sudah Dihafal untuk memantau progresmu.
+                  Gunakan tombol 📌 Favorit, ⏳ Sedang Dihafal, atau ✅ Sudah Dihafal untuk memantau progresmu. Data otomatis tersimpan dan disinkronkan ke Google Sheets!
                 </p>
               </div>
             </div>
@@ -861,6 +1055,13 @@ export default function App() {
               setIsFlipped(false);
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
+            onSelectSurahAndAyah={handleSelectSurahAndAyah}
+            onSelectPage={(newPage) => {
+              setCurrentPage(newPage);
+              setCurrentIndex(0);
+              setIsFlipped(false);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           />
         )}
       </main>
@@ -874,6 +1075,15 @@ export default function App() {
             <span>untuk para penuntut ilmu & penghafal Al-Qur'an</span>
           </p>
           <div className="flex items-center gap-2.5 text-slate-400">
+            <button
+              onClick={() => setIsGoogleSheetsModalOpen(true)}
+              className="hover:text-pink-600 underline underline-offset-2 transition-colors cursor-pointer flex items-center gap-1"
+              title="Integrasi Google Sheets"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Google Sheets API</span>
+            </button>
+            <span>·</span>
             <button
               onClick={() => setShowSplash(true)}
               className="hover:text-slate-700 underline underline-offset-2 transition-colors cursor-pointer"
@@ -915,17 +1125,15 @@ export default function App() {
         currentPage={currentPage}
       />
 
-      {/* Modal: Dashboard Progress Hafalan */}
-      <ProgressDashboardModal
-        isOpen={isDashboardOpen}
-        onClose={() => setIsDashboardOpen(false)}
-        statusMap={statusMap}
+      {/* Modal: Google Sheets Setup & Sync */}
+      <GoogleSheetsModal
+        isOpen={isGoogleSheetsModalOpen}
+        onClose={() => setIsGoogleSheetsModalOpen(false)}
         themeConfig={themeConfig}
-        onNavigateToAyah={handleNavigateFromDashboard}
-        onRemoveStatus={handleRemoveStatus}
-        onClearAllStatuses={handleClearAllStatuses}
-        dailyTarget={dailyTarget}
-        onChangeDailyTarget={handleUpdateDailyTarget}
+        lastSyncedAt={lastSyncedAt}
+        onTriggerSync={handleTriggerFullSync}
+        isSyncing={isSyncing}
+        syncMessage={syncMessage}
       />
 
       {/* Modal: Panduan Tajwid Berwarna untuk Pemula */}
