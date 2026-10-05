@@ -1,0 +1,38 @@
+{
+  "id": "/",
+  "name": "HafalanKu - Al-Qur'an Hafalan & Belajar",
+  "short_name": "HafalanKu",
+  "description": "Aplikasi Al-Qur'an Hafalan & Belajar interaktif ramah pemula: Flashcard tebak ayat, mode Mushaf digital, panduan tajwid berwarna, audio murottal, penanda status hafalan, dan sinkronisasi Google Sheets.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#fff1f2",
+  "theme_color": "#be123c",
+  "categories": ["education", "lifestyle", "books"],
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

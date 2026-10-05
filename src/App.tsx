@@ -53,6 +53,8 @@ import { SelectorModal } from './components/SelectorModal';
 import { VerseGridModal } from './components/VerseGridModal';
 import { FloralBackground } from './components/FloralBackground';
 import { SplashScreen } from './components/SplashScreen';
+import { InstallGuideModal } from './components/InstallGuideModal';
+import { ShareAppModal } from './components/ShareAppModal';
 
 const STATUS_STORAGE_KEY = 'hafalanku_ayah_statuses_v2';
 const SCHEDULES_STORAGE_KEY = 'hafalanku_schedules_v2';
@@ -261,6 +263,8 @@ export default function App() {
 
   // 7. Google Sheets Sync State
   const [isGoogleSheetsModalOpen, setIsGoogleSheetsModalOpen] = useState<boolean>(false);
+  const [isInstallGuideOpen, setIsInstallGuideOpen] = useState<boolean>(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(() => {
@@ -900,6 +904,8 @@ export default function App() {
         }}
         onOpenGoogleSheets={() => setIsGoogleSheetsModalOpen(true)}
         isSheetsConfigured={isRealScriptConfigured()}
+        onOpenInstallGuide={() => setIsInstallGuideOpen(true)}
+        onOpenShareModal={() => setIsShareModalOpen(true)}
         hintMode={hintMode}
         onChangeHintMode={(mode) => setHintMode(mode)}
         dailyTarget={dailyTarget}
@@ -1114,6 +1120,22 @@ export default function App() {
             </button>
             <span>·</span>
             <button
+              onClick={() => setIsInstallGuideOpen(true)}
+              className="hover:text-emerald-700 underline underline-offset-2 transition-colors cursor-pointer"
+              title="Tambahkan ke Layar Utama HP"
+            >
+              Pasang di HP
+            </button>
+            <span>·</span>
+            <button
+              onClick={() => setIsShareModalOpen(true)}
+              className="hover:text-emerald-700 underline underline-offset-2 transition-colors cursor-pointer"
+              title="Bagikan Tautan & Cover Banner"
+            >
+              Bagikan
+            </button>
+            <span>·</span>
+            <button
               onClick={() => setShowSplash(true)}
               className="hover:text-slate-700 underline underline-offset-2 transition-colors cursor-pointer"
               title="Tampilkan layar pembuka"
@@ -1175,6 +1197,18 @@ export default function App() {
         onClose={() => setIsTajweedModalOpen(false)}
         themeConfig={themeConfig}
         highlightRule={highlightTajweedRule}
+      />
+
+      {/* Modal: Panduan Tambah ke Layar Utama HP (PWA) */}
+      <InstallGuideModal
+        isOpen={isInstallGuideOpen}
+        onClose={() => setIsInstallGuideOpen(false)}
+      />
+
+      {/* Modal: Bagikan Tautan & Pratinjau Cover Social Share */}
+      <ShareAppModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
       />
     </div>
   );

@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Rose-Pink Velvet Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#be123c" />
+      <stop offset="35%" stop-color="#9f1239" />
+      <stop offset="70%" stop-color="#881337" />
+      <stop offset="100%" stop-color="#4c0519" />
+    </linearGradient>
+
+    <!-- Warm Rose-Gold Accent Gradient -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff1f2" />
+      <stop offset="25%" stop-color="#fef08a" />
+      <stop offset="60%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+
+    <!-- Soft Rose Glow Gradient -->
+    <radialGradient id="glowGrad" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#fda4af" stop-opacity="0.45" />
+      <stop offset="50%" stop-color="#f43f5e" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="#881337" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Drop Shadow -->
+    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#2a030d" flood-opacity="0.55" />
+    </filter>
+  </defs>
+
+  <!-- Background Base with Rounded Corners -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+
+  <!-- Subtle Islamic Geometric Watermark Stars (in soft blush white) -->
+  <g opacity="0.10" stroke="#ffffff" stroke-width="2" fill="none">
+    <rect x="156" y="156" width="200" height="200" transform="rotate(45 256 256)" rx="8" />
+    <rect x="156" y="156" width="200" height="200" rx="8" />
+    <circle cx="256" cy="256" r="160" />
+    <circle cx="256" cy="256" r="210" stroke-dasharray="8 8" />
+  </g>
+
+  <!-- Ambient Glow Behind Quran -->
+  <circle cx="256" cy="245" r="150" fill="url(#glowGrad)" />
+
+  <!-- Outer Decorative Rose-Gold Ring (Safe Zone Border) -->
+  <circle cx="256" cy="256" r="195" fill="none" stroke="url(#goldGrad)" stroke-width="3" opacity="0.65" stroke-dasharray="16 8" />
+  <circle cx="256" cy="256" r="185" fill="none" stroke="url(#goldGrad)" stroke-width="1.5" opacity="0.4" />
+
+  <!-- Crescent and Star at Top -->
+  <g transform="translate(256, 126)" filter="url(#dropShadow)">
+    <path d="M -2, -26 A 20 20 0 1 0 16 10 A 15 15 0 1 1 -2 -26 Z" fill="url(#goldGrad)" />
+    <polygon points="9,-6 11,-1 16,-1 12,2 14,7 9,4 5,7 6,2 3,-1 8,-1" fill="url(#goldGrad)" />
+  </g>
+
+  <!-- The Open Al-Qur'an (Rehal & Mushaf Pages) -->
+  <g filter="url(#dropShadow)">
+    <!-- Wooden Rehal / Bookstand base in deep rich rosewood mahogany -->
+    <path d="M 120 338 L 190 385 L 256 345 L 322 385 L 392 338 L 368 322 L 322 355 L 256 320 L 190 355 L 144 322 Z" fill="#701a2c" opacity="0.95" />
+    <path d="M 190 385 L 256 345 L 322 385" stroke="url(#goldGrad)" stroke-width="4" fill="none" stroke-linejoin="round" />
+
+    <!-- Quran Binding Backing Cover (Deep Velvet Rose with Gold Trim) -->
+    <path d="M 126 312 C 180 326, 230 310, 256 304 C 282 310, 332 326, 386 312 L 396 206 C 340 218, 288 202, 256 196 C 224 202, 172 218, 116 206 Z" fill="#9f1239" stroke="url(#goldGrad)" stroke-width="3" />
+
+    <!-- Quran Right & Left Under Pages -->
+    <path d="M 132 305 C 182 318, 230 304, 256 298 C 282 304, 330 318, 380 305 L 388 202 C 334 213, 286 200, 256 195 C 226 200, 178 213, 124 202 Z" fill="#fdf2f8" opacity="0.8" />
+
+    <!-- Left Main Page (Aesthetic Warm Blush Cream) -->
+    <path d="M 128 296 C 180 310, 226 296, 256 288 L 256 182 C 226 190, 178 202, 122 192 Z" fill="#fff5f5" stroke="#fbcfe8" stroke-width="1.5" />
+    <!-- Left Page Subtle Text Lines in Warm Rosewood -->
+    <g opacity="0.4" stroke="#881337" stroke-width="2.5" stroke-linecap="round">
+      <line x1="150" y1="216" x2="236" y2="210" />
+      <line x1="146" y1="232" x2="238" y2="226" />
+      <line x1="144" y1="248" x2="238" y2="242" />
+      <line x1="146" y1="264" x2="236" y2="258" />
+      <line x1="156" y1="280" x2="224" y2="274" />
+    </g>
+
+    <!-- Right Main Page -->
+    <path d="M 384 296 C 332 310, 286 296, 256 288 L 256 182 C 286 190, 334 202, 390 192 Z" fill="#fff5f5" stroke="#fbcfe8" stroke-width="1.5" />
+    <!-- Right Page Subtle Text Lines -->
+    <g opacity="0.4" stroke="#881337" stroke-width="2.5" stroke-linecap="round">
+      <line x1="276" y1="210" x2="362" y2="216" />
+      <line x1="274" y1="226" x2="366" y2="232" />
+      <line x1="274" y1="242" x2="368" y2="248" />
+      <line x1="276" y1="258" x2="366" y2="264" />
+      <line x1="288" y1="274" x2="356" y2="280" />
+    </g>
+
+    <!-- Quran Center Spine -->
+    <path d="M 254 182 L 254 292 L 258 292 L 258 182 Z" fill="#9f1239" opacity="0.6" />
+
+    <!-- Silk Bookmark Ribbon in Vibrant Petal Rose -->
+    <path d="M 256 184 Q 262 250 274 320 L 262 314 L 250 322 Q 254 250 256 184 Z" fill="#fb7185" />
+    <path d="M 274 320 L 262 314 L 250 322" stroke="#f43f5e" stroke-width="1.5" fill="none" />
+
+    <!-- Golden Header Ornaments -->
+    <circle cx="192" cy="204" r="3" fill="#f59e0b" />
+    <circle cx="320" cy="204" r="3" fill="#f59e0b" />
+  </g>
+
+  <!-- Typography at Bottom: "HafalanKu" -->
+  <g transform="translate(256, 428)">
+    <rect x="-95" y="-24" width="190" height="38" rx="19" fill="#4c0519" fill-opacity="0.9" stroke="url(#goldGrad)" stroke-width="1.5" />
+    <text x="0" y="2" text-anchor="middle" font-family="'Plus Jakarta Sans', 'Poppins', sans-serif" font-weight="700" font-size="20" fill="#fef08a" letter-spacing="1.5">HafalanKu</text>
+  </g>
+</svg>

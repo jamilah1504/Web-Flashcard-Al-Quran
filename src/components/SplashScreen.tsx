@@ -183,11 +183,13 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
 
           {/* Icon Box */}
           <div
-            className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-tr ${themeConfig.accentGradient} p-0.5 shadow-2xl flex items-center justify-center`}
+            className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-tr ${themeConfig.accentGradient} p-1 shadow-2xl flex items-center justify-center`}
           >
-            <div className="w-full h-full bg-white/15 backdrop-blur-md rounded-[22px] flex items-center justify-center text-white">
-              <BookOpen className="w-10 h-10 sm:w-12 sm:h-12 text-white drop-shadow-md animate-bounce-subtle" />
-            </div>
+            <img
+              src="/icon.svg"
+              alt="HafalanKu Logo"
+              className="w-full h-full rounded-[20px] object-cover shadow-md"
+            />
 
             {/* Sparkle Badge */}
             <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-amber-400 text-amber-950 flex items-center justify-center shadow-lg border-2 border-white">

@@ -2,19 +2,72 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Al-Qur'an Hafalan & Belajar (HafalanKu)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <title>HafalanKu – Al-Qur'an Hafalan & Belajar Interaktif</title>
+    
+    <!-- Meta Deskripsi & Kata Kunci -->
     <meta
       name="description"
-      content="Aplikasi Al-Qur'an Hafalan & Belajar interaktif ramah pemula: Flashcard tebak ayat, mode Mushaf digital, panduan tajwid berwarna, transliterasi Latin, audio murottal, penanda status hafalan, dan 3 tema warna menenangkan."
+      content="Aplikasi Al-Qur'an Hafalan & Belajar interaktif ramah pemula: Flashcard tebak ayat, mode Mushaf digital, panduan tajwid berwarna, audio murottal per ayat, dan sinkronisasi Google Sheets."
     />
-    <meta property="og:title" content="Al-Qur'an Hafalan & Belajar (HafalanKu)" />
+    <meta name="theme-color" content="#be123c" />
+    
+    <!-- Mobile PWA & Apple Home Screen Config -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="HafalanKu" />
+    <meta name="application-name" content="HafalanKu" />
+    
+    <!-- Icons & Manifest -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="shortcut icon" href="/favicon-32x32.png" />
+
+    <!-- OpenGraph (Facebook, WhatsApp, Telegram, Discord, LinkedIn, iMessage) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="HafalanKu" />
+    <meta property="og:title" content="HafalanKu – Al-Qur'an Hafalan & Belajar Interaktif" />
     <meta
       property="og:description"
-      content="Aplikasi Al-Qur'an Hafalan & Belajar interaktif ramah pemula: Flashcard tebak ayat, mode Mushaf digital, panduan tajwid berwarna, transliterasi Latin, audio murottal, penanda status hafalan, dan 3 tema warna menenangkan."
+      content="Aplikasi Al-Qur'an Hafalan & Belajar interaktif ramah pemula: Flashcard tebak ayat, mode Mushaf digital, panduan tajwid berwarna, audio murottal per ayat, dan sinkronisasi Google Sheets."
     />
-    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/og-cover.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Cover Al-Qur'an Hafalan & Belajar (HafalanKu) - Flashcard, Tajwid, Audio Murottal, dan Google Sheets" />
+
+    <!-- Twitter / X Cards -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="HafalanKu – Al-Qur'an Hafalan & Belajar Interaktif" />
+    <meta
+      name="twitter:description"
+      content="Aplikasi Al-Qur'an Hafalan & Belajar interaktif ramah pemula: Flashcard tebak ayat, mode Mushaf digital, panduan tajwid berwarna, audio murottal per ayat, dan sinkronisasi Google Sheets."
+    />
+    <meta name="twitter:image" content="/og-cover.png" />
+    <meta name="twitter:image:alt" content="Cover Al-Qur'an Hafalan & Belajar (HafalanKu)" />
+
+    <!-- Schema.org Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "HafalanKu - Al-Qur'an Hafalan & Belajar",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "All",
+      "description": "Aplikasi Al-Qur'an Hafalan & Belajar interaktif ramah pemula dengan Flashcard tebak ayat, panduan tajwid berwarna, audio murottal, dan sinkronisasi Google Sheets.",
+      "image": "/og-cover.png",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "IDR"
+      }
+    }
+    </script>
 
     <!-- Google Fonts: Poppins, Quicksand, Plus Jakarta Sans, Amiri, Scheherazade New -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
