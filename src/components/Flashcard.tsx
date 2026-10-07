@@ -335,7 +335,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
                   {ayah.numberInSurah}
                 </span>
                 <span className="font-bold text-slate-800">Akhir Ayat {ayah.numberInSurah}</span>
-                <AyahEndSymbol number={ayah.numberInSurah} size="sm" />
+                <AyahEndSymbol number={ayah.numberInSurah} size="xs" />
               </div>
               <span className="text-[11px] text-slate-400 font-medium">
                 Surah {ayah.surah.englishName} ({ayah.surah.name})

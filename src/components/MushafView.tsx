@@ -987,7 +987,7 @@ export const MushafView: React.FC<MushafViewProps> = ({
                       {ayah.numberInSurah}
                     </span>
                     <span>Akhir Ayat {ayah.numberInSurah}</span>
-                    <span className="font-arabic text-sm text-pink-600 font-bold">﴿{toArabicNumerals(ayah.numberInSurah)}﴾</span>
+                    <AyahEndSymbol number={ayah.numberInSurah} size="xs" />
                   </div>
                   <span className="text-[11px] text-slate-400 font-medium">
                     Hal. {ayah.page} · Juz {ayah.juz}

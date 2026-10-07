@@ -4,15 +4,20 @@ import { toArabicNumerals } from '../utils/quranHelper';
 interface AyahEndSymbolProps {
   number: number;
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 }
 
 /**
- * Standard Quranic Ayah End Marker
- * Displays the Eastern Arabic ayah numeral inside authentic Quranic ornate parenthesis ﴿...﴾.
- * Uses strict LTR bidi isolation inside the badge so that the ornate brackets always
- * embrace the verse number (opening inward) and never appear inverted or back-to-back.
+ * Authentic Quranic Ornate Parenthesis Vector Paths (Amiri Uthmani Master Glyphs U+FD3E & U+FD3F)
+ * Guarantees 100% pixel-perfect consistency across ALL devices (iOS, Android, Windows, Mac, Linux)
+ * without depending on device system font support or suffering BiDi direction inversion.
  */
+const LEFT_ORNATE_BRACKET_PATH =
+  'M 492 386 Q 525 395 536 403 Q 547 411 539 426 Q 538 427 538.0 427.5 Q 538 428 537 429 L 469 521 Q 472 524 478 528 L 567 462 Q 585 448 596 467 Q 607 485 616 534 Q 631 542 644.5 553.0 Q 658 564 669 579 L 669 580 Q 675 591 669 602 Q 658 617 645.0 628.5 Q 632 640 616 648 Q 606 703 590 720 Q 580 730 567 720 L 477 653 L 469 661 L 537 753 Q 549 772 528 783 Q 527 783 525.0 784.0 Q 523 785 518 787 Q 514 788 507.5 791.0 Q 501 794 492 796 Q 537 971 636 1109 L 636 1110 Q 656 1141 634 1163 Q 613 1184 583 1155 L 582 1154 Q 431 999 374 805 Q 352 802 330.5 796.5 Q 309 791 288 783 Q 267 774 278 756 Q 279 755 279 753 L 345 664 Q 342 660 339.5 657.5 Q 337 655 335 653 L 244 720 Q 226 732 214 712 L 214 711 Q 202 679 196 648 Q 166 632 143 602 Q 137 590 143 579 Q 166 548 196 534 Q 207 478 217 465 Q 227 452 242 461 Q 243 462 244 462 L 334 529 Q 337 526 340.0 523.5 Q 343 521 346 518 L 279 429 Q 274 421 275 414 Q 276 406 288 399 Q 310 391 331.5 385.0 Q 353 379 374 377 Q 431 184 582 29 Q 612 0 634 22 Q 655 43 636 74 Q 536 221 492 386 Z M 452 764 Q 453 764 455.0 763.5 Q 457 763 462 762 Q 467 761 474.0 759.5 Q 481 758 490 755 L 443 692 Q 439 697 435.0 703.0 Q 431 709 427 715 Q 419 728 407 728 Q 393 728 385 716 Q 381 710 378.0 704.5 Q 375 699 371 695 L 327 755 Q 365 766 399 767 Q 404 768 406 773 L 408 783 Q 454 952 578 1092 Q 534 1022 501.5 942.5 Q 469 863 447 773 Q 445 766 452 764 Z M 447 409 Q 484 245 579 90 Q 518 160 475.5 237.0 Q 433 314 409 398 L 406 409 Q 404 415 399 415 Q 363 416 327 427 L 371 487 Q 375 482 378.0 476.5 Q 381 471 385 466 Q 394 454 406 454 Q 419 454 428 466 Q 433 472 436.5 478.5 Q 440 485 444 490 L 490 427 Q 473 421 453 418 Q 447 416 447 410 Z M 348 586 Q 348 609 362 629 Q 376 649 400 649 Q 412 649 423.0 645.0 Q 434 641 444 634 Q 463 621 463 596 Q 463 573 449 553 Q 435 533 411 533 Q 387 533 367 548 Q 348 563 348 586 Z M 228 619 Q 231 621 233 635 Q 235 649 242 673 L 304 627 Q 299 623 293.5 619.0 Q 288 615 282 611 Q 270 603 271 591 Q 273 577 283 570 L 304 555 L 242 509 Q 238 521 236.0 533.0 Q 234 545 232 556 Q 230 561 228 562 L 216 568 Q 207 572 199.0 577.5 Q 191 583 184 591 Q 198 605 216 614 Z M 508 555 Q 513 559 518.5 563.0 Q 524 567 530 571 Q 542 579 541 592 Q 540 605 529 612 Q 517 619 508 627 L 569 673 Q 573 661 576.0 649.0 Q 579 637 580 625 Q 582 620 584 619 L 596 614 Q 614 605 628 591 Q 621 583 613.0 577.5 Q 605 572 596 568 L 584 562 Q 580 560 578 546 Q 576 531 569 509 Z';
+
+const RIGHT_ORNATE_BRACKET_PATH =
+  'M 223 385 Q 180 220 79 73 Q 58 42 81 21 Q 104 0 133 28 Q 284 183 341 376 Q 363 378 384.0 384.0 Q 405 390 427 398 Q 439 405 440 413 Q 441 420 436 428 L 369 517 Q 371 520 374.0 522.5 Q 377 525 380 528 L 471 461 Q 472 461 473 460 Q 489 450 498 464 Q 503 471 508.5 488.0 Q 514 505 519 533 Q 549 547 572 578 Q 578 589 572 601 Q 549 631 519 647 Q 516 663 511.0 678.5 Q 506 694 500 710 L 500 711 Q 489 731 471 719 L 380 652 L 369 663 L 436 752 Q 436 754 437 755 Q 448 773 427 782 Q 385 798 341 804 Q 284 998 133 1153 Q 132 1153 131 1154 Q 103 1182 81 1162 Q 58 1141 78 1109 L 79 1108 Q 178 970 223 795 Q 214 793 208.0 790.0 Q 202 787 197 786 Q 193 784 190.5 783.0 Q 188 782 187 782 Q 175 775 174 767 Q 173 760 178 752 L 245 660 L 237 652 L 147 719 Q 133 728 124 719 Q 110 703 99 647 Q 69 632 46 601 L 45 601 Q 37 590 45 579 L 46 578 Q 57 563 70.5 552.0 Q 84 541 99 533 Q 104 507 109.0 490.5 Q 114 474 119 466 Q 130 448 147 461 L 237 527 Q 240 525 245 520 L 178 428 Q 177 427 177.0 426.5 Q 177 426 176 425 Q 168 410 179 402 Q 190 394 223 385 Z M 263 763 Q 270 765 268 772 Q 246 862 213.5 941.5 Q 181 1021 137 1091 Q 261 951 307 782 L 309 772 Q 311 767 315 766 Q 351 764 388 754 L 344 694 Q 337 703 329.5 715.0 Q 322 727 308 727 Q 295 727 287 714 Q 283 708 279.5 702.0 Q 276 696 271 691 L 225 754 Q 242 759 252 761 Q 257 762 259.5 762.5 Q 262 763 263 763 Z M 268 408 L 268 409 Q 268 415 262 417 Q 242 420 225 426 L 271 489 Q 275 484 279.0 477.5 Q 283 471 287 465 Q 296 453 309 453 Q 320 453 329 465 L 344 486 L 388 426 Q 352 416 315 414 Q 311 414 309 408 L 306 397 Q 260 229 136 89 Q 231 244 268 408 Z M 367 585 Q 367 562 347 547 Q 328 532 303 532 Q 279 532 265 552 Q 251 572 251 595 Q 251 619 271 633 Q 281 640 291.5 644.0 Q 302 648 314 648 Q 338 648 352 628 Q 359 618 363.0 607.5 Q 367 597 367 585 Z M 487 618 L 498 613 Q 507 608 515.5 602.5 Q 524 597 531 590 Q 524 582 515.5 576.5 Q 507 571 498 567 L 487 561 Q 484 560 482 555 Q 481 544 479.0 532.0 Q 477 520 473 508 L 410 554 L 431 569 Q 442 576 443 590 Q 444 602 432 610 Q 426 614 420.5 618.0 Q 415 622 410 626 L 473 672 Q 480 648 482 634 Q 484 620 487 618 Z M 207 554 L 146 508 Q 142 519 139.5 528.5 Q 137 538 136 545 Q 134 559 131 561 L 119 567 Q 101 576 87 590 Q 95 597 102.5 602.5 Q 110 608 119 613 L 131 618 Q 133 619 135 624 Q 137 636 139.5 648.0 Q 142 660 146 672 L 207 626 L 186 611 Q 175 603 174 591 Q 173 578 185 570 Q 191 566 196.5 562.0 Q 202 558 207 554 Z';
+
 export const AyahEndSymbol: React.FC<AyahEndSymbolProps> = ({
   number,
   className = '',
@@ -21,22 +26,44 @@ export const AyahEndSymbol: React.FC<AyahEndSymbolProps> = ({
   const arabicNum = toArabicNumerals(number);
 
   const sizeClasses = {
+    xs: 'text-xs',
     sm: 'text-sm sm:text-base',
-    md: 'text-xl sm:text-2xl',
+    md: 'text-lg sm:text-xl',
     lg: 'text-2xl sm:text-3xl',
+    xl: 'text-3xl sm:text-4xl',
   }[size];
 
   return (
     <span
       dir="ltr"
-      className={`inline-flex items-center justify-center font-arabic text-pink-600 font-bold mx-1.5 align-middle select-none whitespace-nowrap tracking-normal ${sizeClasses} ${className}`}
-      style={{ unicodeBidi: 'isolate', direction: 'ltr' }}
+      className={`inline-flex items-center justify-center align-middle mx-1 sm:mx-1.5 select-none font-arabic font-bold text-pink-600 leading-none whitespace-nowrap ${sizeClasses} ${className}`}
       title={`Akhir Ayat ${number}`}
-      aria-label={`Akhir Ayat ${number}`}
+      aria-label={`Ayat ${number}`}
     >
-      <span className="leading-none text-pink-500/90 select-none" aria-hidden="true">&#xFD3F;</span>
-      <span className="font-arabic font-bold mx-0.5 leading-none px-0.5 text-pink-700">{arabicNum}</span>
-      <span className="leading-none text-pink-500/90 select-none" aria-hidden="true">&#xFD3E;</span>
+      {/* Visual Left Ornate Quranic Parenthesis with Rosette Flower */}
+      <svg
+        viewBox="137 0 538 1184"
+        className="h-[1.12em] w-auto shrink-0 inline-block align-middle fill-current"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d={LEFT_ORNATE_BRACKET_PATH} />
+      </svg>
+
+      {/* Eastern Arabic Ayah Numeral */}
+      <span className="px-[1.5px] tracking-normal inline-block text-center align-middle font-arabic font-bold leading-none select-all">
+        {arabicNum}
+      </span>
+
+      {/* Visual Right Ornate Quranic Parenthesis with Rosette Flower */}
+      <svg
+        viewBox="37 0 541 1182"
+        className="h-[1.12em] w-auto shrink-0 inline-block align-middle fill-current"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d={RIGHT_ORNATE_BRACKET_PATH} />
+      </svg>
     </span>
   );
 };
