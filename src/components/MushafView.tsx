@@ -100,8 +100,12 @@ export const MushafView: React.FC<MushafViewProps> = ({
   // Search State
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
-  const [filterMode, setFilterMode] = useState<'all' | 'currentPage'>('all');
   const [highlightedAyahNumber, setHighlightedAyahNumber] = useState<number | null>(null);
+
+  // View Mode: 'cards' (per ayat seperti sekarang) vs 'mushaf_sheet' (lembaran Al-Qur'an)
+  const [pageViewMode, setPageViewMode] = useState<'cards' | 'mushaf_sheet'>('cards');
+  const [selectedSheetAyah, setSelectedSheetAyah] = useState<Ayah | null>(null);
+  const [showSheetTranslations, setShowSheetTranslations] = useState<boolean>(false);
 
   const searchContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -319,21 +323,10 @@ export const MushafView: React.FC<MushafViewProps> = ({
     };
   }, [searchQuery, ayahs]);
 
-  // Filtered verses to display on the page if user chose filterMode === 'currentPage'
+  // Verses to display on current page
   const displayAyahs = useMemo(() => {
-    if (!ayahs || ayahs.length === 0) return [];
-    if (filterMode === 'currentPage' && searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      return ayahs.filter((ayah) => {
-        const inTrans = ayah.translation?.toLowerCase().includes(q);
-        const inLatin = ayah.latin?.toLowerCase().includes(q);
-        const inArabic = ayah.text?.includes(q);
-        const isAyahNum = String(ayah.numberInSurah) === q;
-        return inTrans || inLatin || inArabic || isAyahNum;
-      });
-    }
-    return ayahs;
-  }, [ayahs, filterMode, searchQuery]);
+    return ayahs || [];
+  }, [ayahs]);
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4 select-none animate-fadeIn pb-12">
@@ -344,7 +337,7 @@ export const MushafView: React.FC<MushafViewProps> = ({
         ref={searchContainerRef}
         className="relative bg-white/95 backdrop-blur-md rounded-3xl p-3 sm:p-4 border border-slate-200/90 shadow-sm transition-all z-30"
       >
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        <div className="flex items-stretch sm:items-center gap-2">
           {/* Main Search Input */}
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -383,38 +376,6 @@ export const MushafView: React.FC<MushafViewProps> = ({
                 <ArrowRight className="w-3 h-3" />
               </button>
             </div>
-          </div>
-
-          {/* Filter Scope Button: Semua Surat vs Halaman Ini */}
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-200/80 self-end sm:self-auto shrink-0">
-            <button
-              type="button"
-              onClick={() => setFilterMode('all')}
-              className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                filterMode === 'all'
-                  ? `${themeConfig.activeTabClass} shadow-xs font-bold`
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Semua Surat
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterMode('currentPage')}
-              className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                filterMode === 'currentPage'
-                  ? `${themeConfig.badgeBg} font-bold shadow-xs`
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title="Saring ayat yang cocok pada halaman ini saja"
-            >
-              Di Halaman Ini
-              {searchQuery && searchResults.currentPageMatches.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.2 rounded-full bg-emerald-200 text-emerald-900 text-[10px] font-bold">
-                  {searchResults.currentPageMatches.length}
-                </span>
-              )}
-            </button>
           </div>
         </div>
 
@@ -601,43 +562,96 @@ export const MushafView: React.FC<MushafViewProps> = ({
         )}
       </div>
 
-      {/* Notice Bar when Filter Mode is set to 'Di Halaman Ini' */}
-      {filterMode === 'currentPage' && searchQuery.trim() && (
-        <div className="p-3 rounded-2xl bg-pink-50 border border-pink-200 text-pink-900 text-xs flex items-center justify-between gap-2 shadow-xs">
-          <span>
-            Menampilkan <strong>{displayAyahs.length}</strong> ayat pada Halaman {currentPage} yang cocok dengan pencarian "<strong>{searchQuery}</strong>".
-          </span>
-          <button
-            type="button"
-            onClick={() => {
-              setFilterMode('all');
-              setSearchQuery('');
-            }}
-            className="px-2.5 py-1 rounded-xl bg-white text-pink-700 font-bold border border-pink-200 hover:bg-pink-100 transition-colors shrink-0 cursor-pointer"
-          >
-            Tampilkan Semua Ayat
-          </button>
-        </div>
-      )}
+      {/* ========================================================================= */}
+      {/* 1B. TOP PAGE NAVIGATION BAR (FULL KE PINGGIR & 1 BARIS RAPIH)             */}
+      {/* ========================================================================= */}
+      <div className="w-full bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-2 sm:p-2.5 border border-slate-200/90 shadow-2xs flex items-center justify-between gap-1.5 sm:gap-2.5">
+        {/* Tombol Halaman Sebelumnya */}
+        <button
+          onClick={onPrevPage}
+          disabled={currentPage <= 1}
+          className="flex-1 min-w-0 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl sm:rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer truncate shadow-2xs"
+          title="Halaman Sebelumnya"
+        >
+          <ChevronLeft className="w-4 h-4 shrink-0" />
+          <span className="hidden sm:inline truncate">Halaman Sebelumnya</span>
+          <span className="sm:hidden truncate">Sebelumnya</span>
+        </button>
+
+        {/* Pemilih Halaman & Juz (Tengah) */}
+        <button
+          onClick={onOpenSelector}
+          className="flex-1 min-w-0 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl sm:rounded-2xl bg-white hover:bg-pink-50 text-slate-800 hover:text-pink-700 text-xs sm:text-sm font-bold border border-slate-200/90 hover:border-pink-300 transition-all cursor-pointer truncate shadow-2xs"
+          title="Buka Daftar Surat, Juz & Halaman"
+        >
+          <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-600 shrink-0" />
+          <span className="truncate">Hal. {currentPage}</span>
+          <span className="text-[11px] text-slate-400 font-normal hidden sm:inline truncate">(Juz {currentJuz})</span>
+        </button>
+
+        {/* Tombol Halaman Berikutnya */}
+        <button
+          onClick={onNextPage}
+          disabled={currentPage >= 604}
+          className="flex-1 min-w-0 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl sm:rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer truncate shadow-2xs"
+          title="Halaman Berikutnya"
+        >
+          <span className="hidden sm:inline truncate">Halaman Berikutnya</span>
+          <span className="sm:hidden truncate">Berikutnya</span>
+          <ChevronRight className="w-4 h-4 shrink-0" />
+        </button>
+      </div>
 
       {/* ========================================================================= */}
-      {/* 2. TOP MUSHAF CONTROLS BAR (JUZ, HALAMAN, TAJWID TOGGLE, LATIN, FONT)     */}
+      {/* 2. TOP MUSHAF CONTROLS BAR (JUZ, HALAMAN, MODE TAMPILAN, TAJWID, LATIN)  */}
       {/* ========================================================================= */}
       <div className="bg-white/90 backdrop-blur-md rounded-3xl p-3 sm:p-4 border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-2.5 sticky top-16 z-20">
-        {/* Page & Juz Info Tag */}
-        <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-800">
-          <span className={`px-2.5 py-1 rounded-xl ${themeConfig.badgeBg} ${themeConfig.badgeText}`}>
-            Juz {currentJuz}
-          </span>
-          <span className="text-slate-300">·</span>
-          <span>Halaman {currentPage}</span>
-          <span className="text-slate-300">·</span>
-          <span>{ayahs.length} Ayat</span>
+        {/* Page & Juz Info Tag + Mode Selector Button */}
+        <div className="flex items-center flex-wrap gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-800">
+            <span className={`px-2.5 py-1 rounded-xl ${themeConfig.badgeBg} ${themeConfig.badgeText}`}>
+              Juz {currentJuz}
+            </span>
+            <span className="text-slate-300">·</span>
+            <span>Halaman {currentPage}</span>
+            <span className="text-slate-300">·</span>
+            <span>{ayahs.length} Ayat</span>
+          </div>
+
+          {/* Mode Selector Button: Sekarang (Per Ayat) vs Lembaran Al-Qur'an */}
+          <div className="flex items-center bg-slate-100 p-0.5 rounded-2xl border border-slate-200/80 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setPageViewMode('cards')}
+              className={`px-2.5 sm:px-3 py-1 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                pageViewMode === 'cards'
+                  ? 'bg-white text-slate-900 shadow-xs font-bold border border-slate-200/80'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              title="Mode Per Ayat: Kartu terpisah untuk setiap ayat (tampilan saat ini)"
+            >
+              <Layers className="w-3.5 h-3.5 text-pink-600" />
+              <span>Per Ayat</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPageViewMode('mushaf_sheet')}
+              className={`px-2.5 sm:px-3 py-1 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                pageViewMode === 'mushaf_sheet'
+                  ? 'bg-white text-slate-900 shadow-xs font-bold border border-slate-200/80'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              title="Mode Lembaran Al-Qur'an: Tampilan satu lembar utuh seperti mushaf Al-Qur'an fisik"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-pink-600" />
+              <span>Lembaran Al-Qur'an</span>
+            </button>
+          </div>
         </div>
 
         {/* View Options & Font Size */}
         <div className="flex items-center flex-wrap gap-2">
-          {/* Tajweed Controls: ON/OFF, Perkecil, Show Lengkapnya, Panduan */}
+          {/* Tajweed Controls: ON/OFF, 1 Button Perbesar/Perkecil, Panduan */}
           <div className="flex items-center flex-wrap gap-1.5 bg-amber-50/90 p-1 rounded-2xl border border-amber-200/90 shadow-2xs">
             {/* Tajweed ON / OFF Toggle */}
             <button
@@ -654,54 +668,34 @@ export const MushafView: React.FC<MushafViewProps> = ({
               <span>Tajwid {showTajweed ? 'ON' : 'OFF'}</span>
             </button>
 
-            {/* When Tajweed is ON: 3 distinct view controls */}
+            {/* When Tajweed is ON: 1 unified toggle button for Perbesar / Perkecil Tajwid */}
             {showTajweed && (
-              <>
-                {/* 1. Perkecil Tajwid */}
-                <button
-                  type="button"
-                  onClick={() => setTajweedGlobalMode('collapsed')}
-                  className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer ${
-                    tajweedGlobalMode === 'collapsed'
-                      ? 'bg-amber-200/90 text-amber-950 font-bold shadow-2xs border border-amber-300 ring-1 ring-amber-300/60'
-                      : 'text-amber-900 bg-white/80 hover:bg-amber-100 border border-amber-200'
-                  }`}
-                  title="Perkecil semua kotak penjelasan tajwid menjadi baris mini"
-                >
-                  <Minimize2 className="w-3 h-3 text-amber-800" />
-                  <span>Perkecil Tajwid</span>
-                </button>
-
-                {/* 2. Perbesar Tajwid (Mode Kecil Dulu) */}
-                <button
-                  type="button"
-                  onClick={() => setTajweedGlobalMode('compact')}
-                  className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer ${
-                    tajweedGlobalMode === 'compact'
-                      ? 'bg-amber-200/90 text-amber-950 font-bold shadow-2xs border border-amber-300 ring-1 ring-amber-300/60'
-                      : 'text-amber-900 bg-white/80 hover:bg-amber-100 border border-amber-200'
-                  }`}
-                  title="Perbesar kartu tajwid (penjelasan dalam mode kecil dulu tanpa teks panjang)"
-                >
-                  <Maximize2 className="w-3 h-3 text-amber-800" />
-                  <span>Perbesar Tajwid</span>
-                </button>
-
-                {/* 3. Kalimat Penjelasan */}
-                <button
-                  type="button"
-                  onClick={() => setTajweedGlobalMode('expanded')}
-                  className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer ${
-                    tajweedGlobalMode === 'expanded'
-                      ? 'bg-amber-200/90 text-amber-950 font-bold shadow-2xs border border-amber-300 ring-1 ring-amber-300/60'
-                      : 'text-amber-900 bg-white/80 hover:bg-amber-100 border border-amber-200'
-                  }`}
-                  title="Munculkan seluruh kalimat uraian penjelasan cara membaca tajwid"
-                >
-                  <BookOpen className="w-3 h-3 text-amber-800" />
-                  <span>Kalimat Penjelasan</span>
-                </button>
-              </>
+              <button
+                type="button"
+                onClick={() =>
+                  setTajweedGlobalMode(
+                    tajweedGlobalMode === 'collapsed' ? 'compact' : 'collapsed'
+                  )
+                }
+                className="px-2.5 py-1 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer text-amber-900 bg-white/90 hover:bg-amber-100 border border-amber-300 shadow-2xs"
+                title={
+                  tajweedGlobalMode === 'collapsed'
+                    ? 'Perbesar penjelasan hukum tajwid'
+                    : 'Perkecil penjelasan hukum tajwid'
+                }
+              >
+                {tajweedGlobalMode === 'collapsed' ? (
+                  <>
+                    <Maximize2 className="w-3.5 h-3.5 text-amber-800" />
+                    <span>Perbesar Tajwid</span>
+                  </>
+                ) : (
+                  <>
+                    <Minimize2 className="w-3.5 h-3.5 text-amber-800" />
+                    <span>Perkecil Tajwid</span>
+                  </>
+                )}
+              </button>
             )}
 
             {/* Guide info modal trigger */}
@@ -767,8 +761,8 @@ export const MushafView: React.FC<MushafViewProps> = ({
         </div>
       </div>
 
-      {/* Surah Header Card if the first ayah starts a surah or to introduce current page's surah */}
-      {surahInfo && (firstAyah?.numberInSurah === 1 ? (
+      {/* Surah Header Card in Cards Mode */}
+      {pageViewMode === 'cards' && surahInfo && (firstAyah?.numberInSurah === 1 ? (
         <div
           className={`p-6 sm:p-8 rounded-3xl text-center bg-gradient-to-r ${themeConfig.accentGradient} text-white shadow-xl relative overflow-hidden`}
         >
@@ -815,7 +809,7 @@ export const MushafView: React.FC<MushafViewProps> = ({
       ))}
 
       {/* ========================================================================= */}
-      {/* 3. VERSES CONTAINER (DAFTAR AYAT UTUH)                                    */}
+      {/* 3. VERSES CONTAINER (MODE KARTU PER AYAT VS LEMBARAN MUSHAF AL-QUR'AN)    */}
       {/* ========================================================================= */}
       {displayAyahs.length === 0 ? (
         <div className="p-12 text-center rounded-3xl bg-white/80 border border-dashed border-slate-200 text-slate-400 space-y-3">
@@ -827,17 +821,14 @@ export const MushafView: React.FC<MushafViewProps> = ({
           </p>
           {searchQuery && (
             <button
-              onClick={() => {
-                setSearchQuery('');
-                setFilterMode('all');
-              }}
+              onClick={() => setSearchQuery('')}
               className="px-4 py-2 rounded-2xl bg-pink-50 text-pink-700 font-bold text-xs hover:bg-pink-100 transition-colors cursor-pointer"
             >
               Reset Pencarian
             </button>
           )}
         </div>
-      ) : (
+      ) : pageViewMode === 'cards' ? (
         <div className="space-y-4">
           {displayAyahs.map((ayah) => {
             const userStatus = statusMap[ayah.number];
@@ -1042,34 +1033,314 @@ export const MushafView: React.FC<MushafViewProps> = ({
             );
           })}
         </div>
+      ) : (
+        /* ========================================================================= */
+        /* 3B. MODE LEMBARAN AL-QUR'AN (AUTHENTIC PRINTED MUSHAF MADINAH PAGE)       */
+        /* ========================================================================= */
+        <div className="bg-[#fefdfb] border-4 border-amber-600/35 ring-8 ring-amber-100/50 rounded-3xl p-5 sm:p-8 md:p-10 shadow-2xl relative select-text transition-all overflow-hidden">
+          {/* Subtle Islamic Floral Corner Ornaments */}
+          <div className="absolute top-2 right-2 w-12 h-12 border-t-2 border-r-2 border-amber-500/40 rounded-tr-2xl pointer-events-none" />
+          <div className="absolute top-2 left-2 w-12 h-12 border-t-2 border-l-2 border-amber-500/40 rounded-tl-2xl pointer-events-none" />
+          <div className="absolute bottom-2 right-2 w-12 h-12 border-b-2 border-r-2 border-amber-500/40 rounded-br-2xl pointer-events-none" />
+          <div className="absolute bottom-2 left-2 w-12 h-12 border-b-2 border-l-2 border-amber-500/40 rounded-bl-2xl pointer-events-none" />
+
+          {/* Top Running Header of the Mushaf Page */}
+          <div className="border-b-2 border-amber-400/40 pb-3 mb-6 flex items-center justify-between text-xs sm:text-sm font-semibold text-amber-900/80 px-1 sm:px-2">
+            {/* Right Header (Surah Name in Arabic) */}
+            <div className="flex items-center gap-2">
+              <span className="font-arabic font-bold text-base sm:text-lg text-amber-950">
+                سُورَةُ {surahInfo?.name}
+              </span>
+              <span className="text-[11px] text-amber-700 hidden sm:inline">
+                ({surahInfo?.englishName})
+              </span>
+            </div>
+
+            {/* Center Page Number Marker */}
+            <div className="flex items-center gap-1 px-3 py-0.5 rounded-full bg-amber-100/70 border border-amber-300/60 text-amber-950 font-bold text-xs">
+              <span>— {currentPage} —</span>
+            </div>
+
+            {/* Left Header (Juz in Arabic & Latin) */}
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-amber-700 hidden sm:inline">
+                Juz {currentJuz}
+              </span>
+              <span className="font-arabic font-bold text-base sm:text-lg text-amber-950">
+                الجُزْءُ {toArabicNumerals(currentJuz)}
+              </span>
+            </div>
+          </div>
+
+          {/* Surah Intro Banner if verse 1 begins on this page */}
+          {firstAyah?.numberInSurah === 1 && surahInfo && (
+            <div className="mb-6 p-4 sm:p-6 rounded-2xl bg-gradient-to-r from-amber-700 via-rose-700 to-amber-700 text-white text-center shadow-md border-2 border-amber-300/40 relative">
+              <p className="text-[10px] sm:text-xs uppercase tracking-widest font-semibold opacity-90 mb-1">
+                {surahInfo.revelationType === 'Meccan' ? 'Makkiyyah' : 'Madaniyyah'} · {surahInfo.numberOfAyahs} Ayat
+              </p>
+              <h3 className="font-arabic text-2xl sm:text-4xl font-bold mb-1">
+                سُورَةُ {surahInfo.name}
+              </h3>
+              <h4 className="font-display text-sm sm:text-base font-bold text-amber-100">
+                Surah {surahInfo.englishName} ({surahInfo.englishNameTranslation})
+              </h4>
+              {surahInfo.number !== 9 && (
+                <div className="mt-4 pt-3 border-t border-white/20">
+                  <p className="font-arabic text-xl sm:text-3xl text-white/95 leading-loose">
+                    بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Continuous Quranic Flowing Text Stream */}
+          <div
+            dir="rtl"
+            lang="ar"
+            className={`font-arabic text-justify leading-[2.8] sm:leading-[3.3] select-text text-slate-900 ${
+              arabicFontSize === 'xl'
+                ? 'text-2xl sm:text-3xl'
+                : arabicFontSize === 'lg'
+                ? 'text-xl sm:text-2xl'
+                : 'text-lg sm:text-xl'
+            }`}
+            style={{
+              fontFamily: "'Amiri', 'Scheherazade New', 'Traditional Arabic', serif",
+              fontFeatureSettings: '"kern" 1, "liga" 1, "calt" 1, "mkmk" 1, "mark" 1',
+              textRendering: 'optimizeLegibility',
+              WebkitFontSmoothing: 'antialiased',
+              textAlignLast: 'center',
+            }}
+          >
+            {displayAyahs.map((ayah, index) => {
+              const isThisPlaying = isPlayingAudio && playingAyahNumber === ayah.number;
+              const isSelected = selectedSheetAyah?.number === ayah.number;
+              const isMemorized = !!statusMap[ayah.number]?.isMemorized;
+              const isNewSurahStart = ayah.numberInSurah === 1 && index > 0;
+
+              return (
+                <React.Fragment key={ayah.number}>
+                  {/* If a new surah starts mid-page (e.g. Juz 30) */}
+                  {isNewSurahStart && (
+                    <div
+                      dir="ltr"
+                      className="my-6 p-4 rounded-2xl bg-gradient-to-r from-amber-700 via-rose-700 to-amber-700 text-white text-center shadow-md border-2 border-amber-300/40 block w-full"
+                    >
+                      <p className="text-[10px] uppercase tracking-widest font-semibold opacity-90 mb-0.5">
+                        {ayah.surah.revelationType === 'Meccan' ? 'Makkiyyah' : 'Madaniyyah'} · {ayah.surah.numberOfAyahs} Ayat
+                      </p>
+                      <h4 className="font-arabic text-2xl sm:text-3xl font-bold mb-1">
+                        سُورَةُ {ayah.surah.name}
+                      </h4>
+                      <h5 className="font-display text-sm font-bold text-amber-100">
+                        Surah {ayah.surah.englishName} ({ayah.surah.englishNameTranslation})
+                      </h5>
+                      {ayah.surah.number !== 9 && (
+                        <div className="mt-3 pt-2.5 border-t border-white/20">
+                          <p dir="rtl" className="font-arabic text-xl sm:text-2xl text-white/95 leading-loose">
+                            بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Verse Text Span with Tajweed */}
+                  <span
+                    onClick={() => setSelectedSheetAyah(isSelected ? null : ayah)}
+                    className={`inline transition-all cursor-pointer rounded-lg px-1 py-0.5 ${
+                      isThisPlaying
+                        ? 'bg-rose-200/90 text-rose-950 font-bold ring-2 ring-rose-400'
+                        : isSelected
+                        ? 'bg-amber-200/90 text-amber-950 font-bold ring-2 ring-amber-400'
+                        : isMemorized
+                        ? 'hover:bg-emerald-100/70'
+                        : 'hover:bg-amber-100/60'
+                    }`}
+                    title={`Surat ${ayah.surah.englishName} : Ayat ${ayah.numberInSurah} (Klik untuk memutar audio & status hafalan)`}
+                  >
+                    <TajweedText
+                      text={ayah.text}
+                      tajweedText={ayah.tajweedText}
+                      showTajweed={showTajweed}
+                      className={
+                        arabicFontSize === 'xl'
+                          ? 'text-2xl sm:text-3xl'
+                          : arabicFontSize === 'lg'
+                          ? 'text-xl sm:text-2xl'
+                          : 'text-lg sm:text-xl'
+                      }
+                    />
+                    <AyahEndSymbol
+                      number={ayah.numberInSurah}
+                      size={arabicFontSize === 'xl' ? 'lg' : arabicFontSize === 'lg' ? 'md' : 'sm'}
+                      className={
+                        isSelected || isThisPlaying
+                          ? 'text-rose-700 scale-110'
+                          : 'text-pink-600'
+                      }
+                    />
+                  </span>
+                </React.Fragment>
+              );
+            })}
+          </div>
+
+          {/* Bottom Running Footer */}
+          <div className="border-t-2 border-amber-400/40 pt-3 mt-8 flex items-center justify-between text-xs text-amber-900/80 px-1 sm:px-2">
+            <span className="font-medium">
+              Mushaf Al-Qur'an Rasm Utsmani 15 Baris
+            </span>
+            <span className="font-bold">
+              Hal. {currentPage} (Juz {currentJuz})
+            </span>
+          </div>
+
+          {/* Interactive Floating Action Bar when an Ayah is selected */}
+          {selectedSheetAyah && (
+            <div className="mt-5 p-3 sm:p-4 rounded-2xl bg-white border-2 border-amber-300 shadow-xl animate-fadeIn space-y-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-7 h-7 rounded-lg bg-pink-100 text-pink-700 font-bold text-xs flex items-center justify-center">
+                    {selectedSheetAyah.numberInSurah}
+                  </span>
+                  <span className="font-bold text-xs sm:text-sm text-slate-800">
+                    Surat {selectedSheetAyah.surah.englishName} : Ayat {selectedSheetAyah.numberInSurah}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <StatusButtons
+                    ayah={selectedSheetAyah}
+                    status={statusMap[selectedSheetAyah.number]}
+                    onToggleStatus={onToggleStatus}
+                    size="sm"
+                    showLabels={false}
+                  />
+                  <button
+                    onClick={() => {
+                      if (isPlayingAudio && playingAyahNumber === selectedSheetAyah.number) {
+                        onStopAudio();
+                      } else {
+                        onPlayAyahAudio(selectedSheetAyah);
+                      }
+                    }}
+                    className={`px-2.5 py-1 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors ${
+                      isPlayingAudio && playingAyahNumber === selectedSheetAyah.number
+                        ? 'bg-rose-500 text-white'
+                        : 'bg-pink-50 text-pink-700 hover:bg-pink-100 border border-pink-200'
+                    }`}
+                  >
+                    {isPlayingAudio && playingAyahNumber === selectedSheetAyah.number ? (
+                      <>
+                        <Square className="w-3.5 h-3.5 fill-current" />
+                        <span>Berhenti</span>
+                      </>
+                    ) : (
+                      <>
+                        <Volume2 className="w-3.5 h-3.5" />
+                        <span>Murottal</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleCopyAyah(selectedSheetAyah)}
+                    className="p-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
+                    title="Salin Teks Arab & Terjemahan"
+                  >
+                    {copiedAyahNumber === selectedSheetAyah.number ? (
+                      <Check className="w-4 h-4 text-emerald-600" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setSelectedSheetAyah(null)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+                    title="Tutup aksi ayat"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Translation & Latin for selected ayah */}
+              <div className="space-y-1.5 text-xs text-slate-700">
+                {showLatin && selectedSheetAyah.latin && (
+                  <p className="text-indigo-900 font-medium bg-indigo-50/60 p-2 rounded-xl border border-indigo-100">
+                    <strong className="text-indigo-700 block text-[10px] uppercase">Latin:</strong>
+                    {selectedSheetAyah.latin}
+                  </p>
+                )}
+                <p className="italic bg-slate-50 p-2 rounded-xl border border-slate-100 leading-relaxed">
+                  <strong className="not-italic text-slate-500 block text-[10px] uppercase">Terjemahan:</strong>
+                  "{selectedSheetAyah.translation}"
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Optional Toggle to View All Translations for this sheet */}
+          <div className="mt-5 pt-3 border-t border-amber-200/50 flex flex-col items-center">
+            <button
+              type="button"
+              onClick={() => setShowSheetTranslations(!showSheetTranslations)}
+              className="text-xs font-semibold text-amber-900 hover:text-amber-950 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-100/60 hover:bg-amber-100 border border-amber-200 transition-colors cursor-pointer"
+            >
+              <span>{showSheetTranslations ? 'Sembunyikan' : 'Buka'} Terjemahan & Latin Seluruh Ayat di Halaman Ini</span>
+            </button>
+
+            {showSheetTranslations && (
+              <div className="mt-3 w-full space-y-2 text-left animate-fadeIn">
+                {displayAyahs.map((ayah) => (
+                  <div key={ayah.number} className="p-2.5 rounded-xl bg-white border border-slate-200 text-xs space-y-1">
+                    <span className="font-bold text-pink-700">
+                      Ayat {ayah.numberInSurah}:
+                    </span>
+                    {showLatin && ayah.latin && (
+                      <p className="text-indigo-900 font-medium">{ayah.latin}</p>
+                    )}
+                    <p className="italic text-slate-600">"{ayah.translation}"</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
-      {/* Bottom Page Navigation Controls */}
-      <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/80 shadow-sm flex flex-wrap items-center justify-between gap-3">
+      {/* Bottom Page Navigation Controls (Full Ke Pinggir & 1 Baris Rapih) */}
+      <div className="w-full bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-2 sm:p-2.5 border border-slate-200/90 shadow-2xs flex items-center justify-between gap-1.5 sm:gap-2.5">
         <button
           onClick={onPrevPage}
           disabled={currentPage <= 1}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
+          className="flex-1 min-w-0 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl sm:rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer truncate shadow-2xs"
+          title="Halaman Sebelumnya"
         >
-          <ChevronLeft className="w-4 h-4" />
-          <span>Halaman Sebelumnya</span>
+          <ChevronLeft className="w-4 h-4 shrink-0" />
+          <span className="hidden sm:inline truncate">Halaman Sebelumnya</span>
+          <span className="sm:hidden truncate">Sebelumnya</span>
         </button>
 
         <button
           onClick={onOpenSelector}
-          className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs sm:text-sm font-semibold border border-slate-200 transition-colors cursor-pointer"
+          className="flex-1 min-w-0 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl sm:rounded-2xl bg-white hover:bg-pink-50 text-slate-800 hover:text-pink-700 text-xs sm:text-sm font-bold border border-slate-200/90 hover:border-pink-300 transition-all cursor-pointer truncate shadow-2xs"
+          title="Buka Daftar Surat, Juz & Halaman"
         >
-          <BookOpen className="w-4 h-4 text-slate-600" />
-          <span>Halaman {currentPage} (Juz {currentJuz})</span>
+          <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-600 shrink-0" />
+          <span className="truncate">Hal. {currentPage}</span>
+          <span className="text-[11px] text-slate-400 font-normal hidden sm:inline truncate">(Juz {currentJuz})</span>
         </button>
 
         <button
           onClick={onNextPage}
           disabled={currentPage >= 604}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
+          className="flex-1 min-w-0 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl sm:rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer truncate shadow-2xs"
+          title="Halaman Berikutnya"
         >
-          <span>Halaman Berikutnya</span>
-          <ChevronRight className="w-4 h-4" />
+          <span className="hidden sm:inline truncate">Halaman Berikutnya</span>
+          <span className="sm:hidden truncate">Berikutnya</span>
+          <ChevronRight className="w-4 h-4 shrink-0" />
         </button>
       </div>
     </div>

@@ -137,17 +137,17 @@ export const Controls: React.FC<ControlsProps> = ({
         </button>
       </div>
 
-      {/* Auxiliary Tools Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs text-slate-500">
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Audio Play/Stop Button */}
+      {/* Auxiliary Tools Bar: 1 Neat Card with 1 Single Row of Buttons */}
+      <div className="bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/90 shadow-2xs p-2 sm:p-2.5 w-full">
+        <div className="flex items-center justify-between gap-1.5 sm:gap-2 w-full">
+          {/* 1. Audio Play/Stop Button */}
           {onToggleAudio && (
             <button
               onClick={onToggleAudio}
               id="btn-control-toggle-audio"
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all shadow-2xs ${
+              className={`flex-1 min-w-0 py-2 px-1.5 sm:px-2.5 rounded-xl border text-[11px] sm:text-xs font-semibold transition-all shadow-2xs flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer truncate ${
                 isPlayingAudio
-                  ? 'bg-rose-500 hover:bg-rose-600 text-white border-rose-600 ring-2 ring-rose-300 animate-pulse'
+                  ? 'bg-rose-500 hover:bg-rose-600 text-white border-rose-600 ring-1 ring-rose-300 animate-pulse'
                   : isAudioLoading
                   ? 'bg-amber-100 text-amber-800 border-amber-300'
                   : isAudioMuted
@@ -164,94 +164,82 @@ export const Controls: React.FC<ControlsProps> = ({
             >
               {isPlayingAudio ? (
                 <>
-                  <Square className="w-3.5 h-3.5 fill-current" />
-                  <span>Hentikan Audio</span>
+                  <Square className="w-3 h-3 fill-current shrink-0" />
+                  <span className="truncate">Hentikan</span>
                 </>
               ) : isAudioLoading ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-700" />
-                  <span>Memuat...</span>
+                  <Loader2 className="w-3 h-3 animate-spin text-amber-700 shrink-0" />
+                  <span className="truncate">Memuat</span>
                 </>
               ) : isAudioMuted ? (
                 <>
-                  <VolumeX className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Audio Nonaktif</span>
+                  <VolumeX className="w-3 h-3 text-slate-400 shrink-0" />
+                  <span className="truncate">Mute</span>
                 </>
               ) : (
                 <>
-                  <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Putar Audio</span>
+                  <Volume2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span className="truncate">Putar Audio</span>
                 </>
               )}
             </button>
           )}
 
-          {/* Latin Transliteration Toggle */}
+          {/* 2. Latin Transliteration Toggle */}
           <button
             onClick={onToggleLatin}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-medium transition-colors ${
+            className={`flex-1 min-w-0 py-2 px-1.5 sm:px-2.5 rounded-xl border text-[11px] sm:text-xs font-semibold transition-colors flex items-center justify-center gap-1 cursor-pointer truncate ${
               showLatin
-                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 font-semibold'
+                ? 'bg-indigo-50 text-indigo-700 border-indigo-300 ring-1 ring-indigo-200'
                 : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
             }`}
             title="Tampilkan atau sembunyikan ejaan Latin"
           >
-            <span>Latin {showLatin ? 'ON' : 'OFF'}</span>
+            <span className="truncate">Latin {showLatin ? 'ON' : 'OFF'}</span>
           </button>
 
-          {/* Tajweed Color Toggle */}
+          {/* 3. Tajweed Color Toggle */}
           <button
             onClick={onToggleTajweed}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-medium transition-colors ${
+            className={`flex-1 min-w-0 py-2 px-1.5 sm:px-2.5 rounded-xl border text-[11px] sm:text-xs font-semibold transition-colors flex items-center justify-center gap-1 cursor-pointer truncate ${
               showTajweed
-                ? 'bg-amber-50 text-amber-700 border-amber-200 font-semibold'
+                ? 'bg-amber-50 text-amber-800 border-amber-300 ring-1 ring-amber-200'
                 : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
             }`}
-            title="Aktifkan warna tajwid otomatis"
+            title="Aktifkan atau nonaktifkan warna tajwid"
           >
-            <Sparkles className="w-3 h-3 text-amber-500" />
-            <span>Tajwid {showTajweed ? 'ON' : 'OFF'}</span>
+            <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
+            <span className="truncate">Tajwid {showTajweed ? 'ON' : 'OFF'}</span>
           </button>
 
-          {/* Shuffle Button */}
-          <button
-            onClick={onToggleShuffle}
-            id="btn-shuffle-ayah"
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${
-              isShuffled
-                ? 'bg-purple-100 text-purple-800 border-purple-300'
-                : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200'
-            }`}
-            title="Acak urutan ayat untuk menguji hafalan"
-          >
-            <Shuffle className="w-3.5 h-3.5" />
-            <span>{isShuffled ? 'Urutan Acak' : 'Acak Ayat'}</span>
-          </button>
-
-          {/* Reset order if shuffled */}
-          {isShuffled && (
+          {/* 4. Shuffle Button */}
+          <div className="flex-1 min-w-0 flex items-center gap-1">
             <button
-              onClick={onResetOrder}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 text-xs transition-colors"
-              title="Kembalikan urutan mushaf"
+              onClick={onToggleShuffle}
+              id="btn-shuffle-ayah"
+              className={`w-full py-2 px-1.5 sm:px-2.5 rounded-xl border text-[11px] sm:text-xs font-semibold transition-all flex items-center justify-center gap-1 cursor-pointer truncate ${
+                isShuffled
+                  ? 'bg-purple-100 text-purple-900 border-purple-300 ring-1 ring-purple-200'
+                  : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200'
+              }`}
+              title="Acak urutan ayat untuk menguji hafalan"
             >
-              <RotateCcw className="w-3 h-3" />
-              <span>Reset</span>
+              <Shuffle className="w-3 h-3 shrink-0" />
+              <span className="truncate">{isShuffled ? 'Acak ON' : 'Acak Ayat'}</span>
             </button>
-          )}
-        </div>
 
-        {/* Keyboard navigation helper */}
-        <div className="hidden md:flex items-center gap-2 text-[11px] text-slate-400">
-          <span>Pintasan:</span>
-          <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-mono">
-            ← / →
-          </kbd>
-          <span>Pindah</span>
-          <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-mono">
-            Spasi
-          </kbd>
-          <span>Buka</span>
+            {/* Reset Order Icon if Shuffled */}
+            {isShuffled && (
+              <button
+                onClick={onResetOrder}
+                className="p-2 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 transition-colors shrink-0 cursor-pointer"
+                title="Kembalikan urutan normal mushaf"
+              >
+                <RotateCcw className="w-3 h-3" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

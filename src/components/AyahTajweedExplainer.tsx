@@ -44,36 +44,19 @@ export const AyahTajweedExplainer: React.FC<AyahTajweedExplainerProps> = ({
 }) => {
   const [internalSelectedRule, setInternalSelectedRule] = useState<TajweedRuleType | null>(null);
   const [isMinimized, setIsMinimized] = useState<boolean>(defaultCollapsed);
-  const [showAllExplanations, setShowAllExplanations] = useState<boolean>(false);
 
   // Sync when parent controls collapse or expansion globally
   useEffect(() => {
     if (forceCollapsed !== undefined && forceCollapsed) {
       setIsMinimized(true);
-      setShowAllExplanations(false);
     }
   }, [forceCollapsed]);
 
   useEffect(() => {
     if (forceExpanded !== undefined && forceExpanded) {
       setIsMinimized(false);
-      // When enlarged, keep explanation in small mode first unless explicitly requesting sentences
-      if (forceExplanationsExpanded !== undefined) {
-        setShowAllExplanations(forceExplanationsExpanded);
-      } else {
-        setShowAllExplanations(false);
-      }
     }
-  }, [forceExpanded, forceExplanationsExpanded]);
-
-  useEffect(() => {
-    if (forceExplanationsExpanded !== undefined) {
-      if (forceExplanationsExpanded) {
-        setIsMinimized(false);
-      }
-      setShowAllExplanations(forceExplanationsExpanded);
-    }
-  }, [forceExplanationsExpanded]);
+  }, [forceExpanded]);
 
   const activeRuleType =
     selectedRuleType !== undefined && selectedRuleType !== null
@@ -232,15 +215,14 @@ export const AyahTajweedExplainer: React.FC<AyahTajweedExplainerProps> = ({
             </button>
           )}
 
-          {/* Button Perbesar (Buka ke mode kecil dulu) */}
+          {/* Button Perbesar */}
           <button
             type="button"
             onClick={() => {
               setIsMinimized(false);
-              setShowAllExplanations(false); // Mode penjelasan tetap kecil dulu!
             }}
             className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-950 text-xs font-bold border border-amber-300 transition-all cursor-pointer shadow-2xs"
-            title="Perbesar kartu tajwid (penjelasan tetap dalam mode ringkas/kecil dulu)"
+            title="Perbesar kartu tajwid untuk melihat hukum tajwid di ayat ini"
           >
             <Maximize2 className="w-3.5 h-3.5 text-amber-800" />
             <span>Perbesar</span>
@@ -265,36 +247,8 @@ export const AyahTajweedExplainer: React.FC<AyahTajweedExplainerProps> = ({
           <span>Hukum Tajwid di Ayat Ini ({presentRules.length} Hukum):</span>
         </div>
 
-        {/* Action Controls: Perbesar Penjelasan, Panduan, Perkecil */}
+        {/* Action Controls: Panduan, Perkecil */}
         <div className="flex flex-wrap items-center gap-1.5 self-end sm:self-auto">
-          {/* Toggle Kalimat Penjelasan */}
-          <button
-            type="button"
-            onClick={() => setShowAllExplanations(!showAllExplanations)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold border transition-all cursor-pointer shadow-2xs ${
-              showAllExplanations
-                ? 'bg-amber-200/90 text-amber-950 border-amber-300 font-bold ring-1 ring-amber-300/60'
-                : 'bg-white hover:bg-amber-100 text-amber-900 border-amber-300'
-            }`}
-            title={
-              showAllExplanations
-                ? 'Kembali ke mode kecil ringkas (sembunyikan kalimat penjelasan)'
-                : 'Perbesar dan munculkan seluruh kalimat uraian penjelasan cara membaca tajwid'
-            }
-          >
-            {showAllExplanations ? (
-              <>
-                <Minimize2 className="w-3.5 h-3.5 text-amber-800" />
-                <span>Perkecil Penjelasan</span>
-              </>
-            ) : (
-              <>
-                <BookOpen className="w-3.5 h-3.5 text-amber-700" />
-                <span>Perbesar Penjelasan</span>
-              </>
-            )}
-          </button>
-
           {/* Full Guide Modal Button */}
           {onOpenFullModal && (
             <button
@@ -308,12 +262,11 @@ export const AyahTajweedExplainer: React.FC<AyahTajweedExplainerProps> = ({
             </button>
           )}
 
-          {/* Minimize Button (Perkecil) */}
+          {/* Single Toggle Button: Perkecil */}
           <button
             type="button"
             onClick={() => {
               setIsMinimized(true);
-              setShowAllExplanations(false);
               if (onSelectRule) onSelectRule(null);
               else setInternalSelectedRule(null);
             }}
@@ -358,66 +311,16 @@ export const AyahTajweedExplainer: React.FC<AyahTajweedExplainerProps> = ({
         })}
       </div>
 
-      {/* Mode Penjelasan Ringkas / Kecil Dulu Hint */}
-      {!showAllExplanations && !activeRule && (
-        <div className="mt-2.5 text-[11px] text-amber-900/80 bg-amber-100/60 rounded-xl px-3 py-1.5 flex items-center justify-between border border-amber-200/60">
-          <span>💡 Mode ringkas: Klik salah satu hukum tajwid di atas, atau klik <strong>"Perbesar Penjelasan"</strong> untuk memunculkan kalimat penjelasannya.</span>
-        </div>
-      )}
-
-      {/* VIEW: All Explanations at Once (when 'Perbesar Penjelasan' is activated) */}
-      {showAllExplanations && (
-        <div className="mt-3 pt-3 border-t border-amber-200/60 space-y-2.5">
-          <div className="text-[11px] font-bold text-amber-900 uppercase tracking-wide flex items-center justify-between">
-            <span>Uraian & Kalimat Penjelasan Cara Membaca:</span>
-            <span className="text-[10px] text-amber-700 font-normal">
-              {presentRules.length} penjelasan lengkap
-            </span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {presentRules.map((rule) => {
-              const fullInfo = TAJWEED_MAP.get(rule.id);
-              if (!fullInfo) return null;
-              return (
-                <div
-                  key={rule.id}
-                  className={`p-2.5 rounded-xl border ${fullInfo.borderColorClass} ${fullInfo.bgColorClass} text-xs space-y-1.5 shadow-2xs`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className={`font-bold flex items-center gap-1.5 ${fullInfo.textColorClass}`}>
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: fullInfo.colorHex }} />
-                      {fullInfo.name} ({fullInfo.arabicName})
-                    </span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-white/90 border border-slate-200/80 font-bold text-slate-700">
-                      ⏱️ {fullInfo.duration}
-                    </span>
-                  </div>
-                  <div className="bg-white/95 p-2 rounded-lg border border-slate-200/70">
-                    <p className="text-[11px] text-slate-800 leading-relaxed font-medium">
-                      <strong className="text-slate-900">Cara Membaca: </strong>
-                      {fullInfo.howToRead}
-                    </p>
-                  </div>
-                  <div className="text-[10px] text-slate-600 pt-0.5 flex items-center justify-between">
-                    <span>
-                      <strong>Huruf: </strong>
-                      <span className="font-arabic font-semibold">{fullInfo.letters}</span>
-                    </span>
-                    <span>
-                      <strong>Contoh: </strong>
-                      <span className="font-arabic font-semibold">{fullInfo.example}</span>
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+      {/* Hint when no specific rule badge is clicked */}
+      {!activeRule && (
+        <div className="mt-2 text-[11px] text-amber-900/80 bg-amber-100/50 rounded-xl px-2.5 py-1 flex items-center justify-between border border-amber-200/50">
+          <span>💡 Klik salah satu hukum tajwid di atas untuk melihat cara membaca & contohnya.</span>
         </div>
       )}
 
       {/* VIEW: Single Selected Rule Detailed Card (when clicking on a badge) */}
       <AnimatePresence>
-        {!showAllExplanations && activeRule && (
+        {activeRule && (
           <motion.div
             initial={{ opacity: 0, height: 0, marginTop: 0 }}
             animate={{ opacity: 1, height: 'auto', marginTop: 10 }}

@@ -1030,20 +1030,68 @@ export default function App() {
               onToggleAudio={() => handlePlayAyahAudio(currentAyah)}
             />
 
-            {/* Beginner Helpful Guidance Strip */}
-            <div className="max-w-2xl mx-auto p-3.5 sm:p-4 rounded-2xl bg-white/80 backdrop-blur-xs border border-slate-200/80 shadow-2xs flex items-start gap-3 text-xs text-slate-600">
-              <div className={`p-2 rounded-xl shrink-0 ${themeConfig.badgeBg}`}>
-                <Flower2 className="w-4 h-4" />
+            {/* Tips Menghafal Mandiri (Metode Pancingan Kata) */}
+            <div className="max-w-2xl mx-auto p-4 sm:p-5 rounded-3xl bg-white/95 backdrop-blur-md border border-pink-100 shadow-sm space-y-3">
+              {/* Header */}
+              <div className="flex items-center gap-2.5 pb-2.5 border-b border-pink-50">
+                <div className={`p-2 rounded-2xl shrink-0 ${themeConfig.badgeBg} ${themeConfig.badgeText}`}>
+                  <Flower2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-800 text-xs sm:text-sm">
+                    Tips Menghafal Mandiri (Metode Pancingan Kata)
+                  </h4>
+                  <p className="text-[11px] text-pink-600 font-medium">
+                    3 langkah mudah & efektif melatih ingatan hafalan Al-Qur'an
+                  </p>
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="font-semibold text-slate-800">
-                  Tips Menghafal Mandiri (Metode Pancingan Kata):
-                </p>
-                <p className="text-slate-500 mt-0.5 leading-relaxed">
-                  Lihat 2 kata awal sebagai pancingan ingatan, sambungkan kelanjutan ayat dalam hati, lalu ketuk kartu untuk memeriksa keakuratan lafal, harakat tajwid, dan artinya.
-                  <br />
-                  Gunakan tombol 📌 Favorit, ⏳ Sedang Dihafal, atau ✅ Sudah Dihafal untuk memantau progresmu. Data otomatis tersimpan dan disinkronkan ke Google Sheets!
-                </p>
+
+              {/* 3 Structured Steps */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                {/* Langkah 1 */}
+                <div className="p-2.5 rounded-2xl bg-pink-50/60 border border-pink-100/80 space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-800 text-xs">
+                    <span className="w-5 h-5 rounded-lg bg-pink-500 text-white flex items-center justify-center text-[11px] font-bold shrink-0">
+                      1
+                    </span>
+                    <span>Lihat Pancingan</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    Baca 2 kata awal di depan kartu sebagai pemicu memori ayat.
+                  </p>
+                </div>
+
+                {/* Langkah 2 */}
+                <div className="p-2.5 rounded-2xl bg-amber-50/60 border border-amber-100/80 space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-800 text-xs">
+                    <span className="w-5 h-5 rounded-lg bg-amber-500 text-white flex items-center justify-center text-[11px] font-bold shrink-0">
+                      2
+                    </span>
+                    <span>Lanjutkan Ayat</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    Ucapkan & sambungkan sisa ayat dalam hati sampai tuntas.
+                  </p>
+                </div>
+
+                {/* Langkah 3 */}
+                <div className="p-2.5 rounded-2xl bg-emerald-50/60 border border-emerald-100/80 space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-800 text-xs">
+                    <span className="w-5 h-5 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-[11px] font-bold shrink-0">
+                      3
+                    </span>
+                    <span>Cek & Tandai</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    Ketuk kartu untuk cek tajwid, lalu beri status (📌, ⏳, ✅).
+                  </p>
+                </div>
+              </div>
+
+              {/* Footer Note */}
+              <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-500 flex items-center gap-1.5">
+                <span>☁️ Progres hafalan tersimpan otomatis & tersinkronisasi ke Google Sheets.</span>
               </div>
             </div>
           </div>
