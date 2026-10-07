@@ -1030,68 +1030,69 @@ export default function App() {
               onToggleAudio={() => handlePlayAyahAudio(currentAyah)}
             />
 
-            {/* Tips Menghafal Mandiri (Metode Pancingan Kata) */}
-            <div className="max-w-2xl mx-auto p-4 sm:p-5 rounded-3xl bg-white/95 backdrop-blur-md border border-pink-100 shadow-sm space-y-3">
+            {/* Tips Menghafal Mandiri (Metode Pancingan Kata) - Konsisten di Semua Device */}
+            <div className="w-full max-w-2xl mx-auto p-4 sm:p-5 rounded-3xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-2xs space-y-3.5 select-none">
               {/* Header */}
-              <div className="flex items-center gap-2.5 pb-2.5 border-b border-pink-50">
+              <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-100">
                 <div className={`p-2 rounded-2xl shrink-0 ${themeConfig.badgeBg} ${themeConfig.badgeText}`}>
                   <Flower2 className="w-4 h-4" />
                 </div>
-                <div>
-                  <h4 className="font-bold text-slate-800 text-xs sm:text-sm">
+                <div className="min-w-0">
+                  <h4 className="font-bold text-slate-800 text-xs sm:text-sm font-display truncate">
                     Tips Menghafal Mandiri (Metode Pancingan Kata)
                   </h4>
-                  <p className="text-[11px] text-pink-600 font-medium">
-                    3 langkah mudah & efektif melatih ingatan hafalan Al-Qur'an
+                  <p className="text-[11px] sm:text-xs text-slate-500 font-medium truncate">
+                    3 langkah mudah & efektif melatih daya ingat hafalan Al-Qur'an
                   </p>
                 </div>
               </div>
 
               {/* 3 Structured Steps */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 text-xs">
                 {/* Langkah 1 */}
-                <div className="p-2.5 rounded-2xl bg-pink-50/60 border border-pink-100/80 space-y-1">
-                  <div className="flex items-center gap-1.5 font-bold text-slate-800 text-xs">
-                    <span className="w-5 h-5 rounded-lg bg-pink-500 text-white flex items-center justify-center text-[11px] font-bold shrink-0">
+                <div className="p-3 rounded-2xl bg-pink-50/70 border border-pink-100/90 flex flex-col justify-between space-y-1.5 transition-all">
+                  <div className="flex items-center gap-2 font-bold text-slate-800 text-xs">
+                    <span className="w-5 h-5 rounded-lg bg-pink-500 text-white flex items-center justify-center text-[11px] font-bold shrink-0 shadow-2xs">
                       1
                     </span>
-                    <span>Lihat Pancingan</span>
+                    <span className="font-semibold text-pink-950">Amati Pancingan</span>
                   </div>
-                  <p className="text-[11px] text-slate-600 leading-relaxed">
-                    Baca 2 kata awal di depan kartu sebagai pemicu memori ayat.
+                  <p className="text-[11px] text-slate-600 leading-relaxed font-normal">
+                    Lihat 1-2 kata awal di bagian depan kartu sebagai pemicu memori ayat.
                   </p>
                 </div>
 
                 {/* Langkah 2 */}
-                <div className="p-2.5 rounded-2xl bg-amber-50/60 border border-amber-100/80 space-y-1">
-                  <div className="flex items-center gap-1.5 font-bold text-slate-800 text-xs">
-                    <span className="w-5 h-5 rounded-lg bg-amber-500 text-white flex items-center justify-center text-[11px] font-bold shrink-0">
+                <div className="p-3 rounded-2xl bg-amber-50/70 border border-amber-100/90 flex flex-col justify-between space-y-1.5 transition-all">
+                  <div className="flex items-center gap-2 font-bold text-slate-800 text-xs">
+                    <span className="w-5 h-5 rounded-lg bg-amber-500 text-white flex items-center justify-center text-[11px] font-bold shrink-0 shadow-2xs">
                       2
                     </span>
-                    <span>Lanjutkan Ayat</span>
+                    <span className="font-semibold text-amber-950">Sambung Mandiri</span>
                   </div>
-                  <p className="text-[11px] text-slate-600 leading-relaxed">
-                    Ucapkan & sambungkan sisa ayat dalam hati sampai tuntas.
+                  <p className="text-[11px] text-slate-600 leading-relaxed font-normal">
+                    Lanjutkan sisa ayat secara mandiri dalam hati atau lisan sampai tuntas.
                   </p>
                 </div>
 
                 {/* Langkah 3 */}
-                <div className="p-2.5 rounded-2xl bg-emerald-50/60 border border-emerald-100/80 space-y-1">
-                  <div className="flex items-center gap-1.5 font-bold text-slate-800 text-xs">
-                    <span className="w-5 h-5 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-[11px] font-bold shrink-0">
+                <div className="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-100/90 flex flex-col justify-between space-y-1.5 transition-all">
+                  <div className="flex items-center gap-2 font-bold text-slate-800 text-xs">
+                    <span className="w-5 h-5 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-[11px] font-bold shrink-0 shadow-2xs">
                       3
                     </span>
-                    <span>Cek & Tandai</span>
+                    <span className="font-semibold text-emerald-950">Periksa & Tandai</span>
                   </div>
-                  <p className="text-[11px] text-slate-600 leading-relaxed">
-                    Ketuk kartu untuk cek tajwid, lalu beri status (📌, ⏳, ✅).
+                  <p className="text-[11px] text-slate-600 leading-relaxed font-normal">
+                    Ketuk kartu untuk cek tajwid, lalu beri status hafalan (📌, ⏳, ✅).
                   </p>
                 </div>
               </div>
 
               {/* Footer Note */}
-              <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-500 flex items-center gap-1.5">
-                <span>☁️ Progres hafalan tersimpan otomatis & tersinkronisasi ke Google Sheets.</span>
+              <div className="pt-2 border-t border-slate-100/90 text-[11px] text-slate-500 flex items-center gap-1.5 font-medium">
+                <span className="text-slate-400">☁️</span>
+                <span>Progres hafalan tersimpan otomatis & tersinkronisasi ke Google Sheets.</span>
               </div>
             </div>
           </div>

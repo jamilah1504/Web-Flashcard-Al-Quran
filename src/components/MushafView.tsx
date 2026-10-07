@@ -563,43 +563,45 @@ export const MushafView: React.FC<MushafViewProps> = ({
       </div>
 
       {/* ========================================================================= */}
-      {/* 1B. TOP PAGE NAVIGATION BAR (FULL KE PINGGIR & 1 BARIS RAPIH)             */}
+      {/* 1B. TOP PAGE NAVIGATION BAR (FULL KE PINGGIR & 1 BARIS KONSISTEN)          */}
       {/* ========================================================================= */}
-      <div className="w-full bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-2 sm:p-2.5 border border-slate-200/90 shadow-2xs flex items-center justify-between gap-1.5 sm:gap-2.5">
-        {/* Tombol Halaman Sebelumnya */}
-        <button
-          onClick={onPrevPage}
-          disabled={currentPage <= 1}
-          className="flex-1 min-w-0 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl sm:rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer truncate shadow-2xs"
-          title="Halaman Sebelumnya"
-        >
-          <ChevronLeft className="w-4 h-4 shrink-0" />
-          <span className="hidden sm:inline truncate">Halaman Sebelumnya</span>
-          <span className="sm:hidden truncate">Sebelumnya</span>
-        </button>
+      <div className="w-full bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-1.5 sm:p-2 border border-slate-200/90 shadow-2xs">
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-3 w-full items-stretch">
+          {/* Tombol Halaman Sebelumnya */}
+          <button
+            onClick={onPrevPage}
+            disabled={currentPage <= 1}
+            className="h-10 sm:h-11 w-full flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 rounded-xl sm:rounded-2xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 font-semibold text-xs sm:text-sm disabled:opacity-35 disabled:pointer-events-none transition-all cursor-pointer shadow-2xs whitespace-nowrap overflow-hidden select-none"
+            title="Halaman Sebelumnya"
+          >
+            <ChevronLeft className="w-4 h-4 shrink-0 text-slate-600" />
+            <span className="truncate hidden sm:inline">Halaman Sebelumnya</span>
+            <span className="truncate sm:hidden">Sebelumnya</span>
+          </button>
 
-        {/* Pemilih Halaman & Juz (Tengah) */}
-        <button
-          onClick={onOpenSelector}
-          className="flex-1 min-w-0 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl sm:rounded-2xl bg-white hover:bg-pink-50 text-slate-800 hover:text-pink-700 text-xs sm:text-sm font-bold border border-slate-200/90 hover:border-pink-300 transition-all cursor-pointer truncate shadow-2xs"
-          title="Buka Daftar Surat, Juz & Halaman"
-        >
-          <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-600 shrink-0" />
-          <span className="truncate">Hal. {currentPage}</span>
-          <span className="text-[11px] text-slate-400 font-normal hidden sm:inline truncate">(Juz {currentJuz})</span>
-        </button>
+          {/* Pemilih Halaman & Juz (Tengah) */}
+          <button
+            onClick={onOpenSelector}
+            className="h-10 sm:h-11 w-full flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 rounded-xl sm:rounded-2xl bg-white hover:bg-pink-50 text-slate-800 hover:text-pink-700 border border-slate-200/90 hover:border-pink-300 font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-2xs whitespace-nowrap overflow-hidden select-none"
+            title="Buka Daftar Surat, Juz & Halaman"
+          >
+            <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-600 shrink-0" />
+            <span className="truncate font-display">Hal. {currentPage}</span>
+            <span className="text-[11px] text-slate-400 font-normal hidden sm:inline truncate">(Juz {currentJuz})</span>
+          </button>
 
-        {/* Tombol Halaman Berikutnya */}
-        <button
-          onClick={onNextPage}
-          disabled={currentPage >= 604}
-          className="flex-1 min-w-0 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl sm:rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer truncate shadow-2xs"
-          title="Halaman Berikutnya"
-        >
-          <span className="hidden sm:inline truncate">Halaman Berikutnya</span>
-          <span className="sm:hidden truncate">Berikutnya</span>
-          <ChevronRight className="w-4 h-4 shrink-0" />
-        </button>
+          {/* Tombol Halaman Setelahnya */}
+          <button
+            onClick={onNextPage}
+            disabled={currentPage >= 604}
+            className="h-10 sm:h-11 w-full flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 rounded-xl sm:rounded-2xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 font-semibold text-xs sm:text-sm disabled:opacity-35 disabled:pointer-events-none transition-all cursor-pointer shadow-2xs whitespace-nowrap overflow-hidden select-none"
+            title="Halaman Setelahnya"
+          >
+            <span className="truncate hidden sm:inline">Halaman Setelahnya</span>
+            <span className="truncate sm:hidden">Setelahnya</span>
+            <ChevronRight className="w-4 h-4 shrink-0 text-slate-600" />
+          </button>
+        </div>
       </div>
 
       {/* ========================================================================= */}
@@ -1309,39 +1311,44 @@ export const MushafView: React.FC<MushafViewProps> = ({
         </div>
       )}
 
-      {/* Bottom Page Navigation Controls (Full Ke Pinggir & 1 Baris Rapih) */}
-      <div className="w-full bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-2 sm:p-2.5 border border-slate-200/90 shadow-2xs flex items-center justify-between gap-1.5 sm:gap-2.5">
-        <button
-          onClick={onPrevPage}
-          disabled={currentPage <= 1}
-          className="flex-1 min-w-0 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl sm:rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer truncate shadow-2xs"
-          title="Halaman Sebelumnya"
-        >
-          <ChevronLeft className="w-4 h-4 shrink-0" />
-          <span className="hidden sm:inline truncate">Halaman Sebelumnya</span>
-          <span className="sm:hidden truncate">Sebelumnya</span>
-        </button>
+      {/* Bottom Page Navigation Controls (Full Ke Pinggir & 1 Baris Konsisten) */}
+      <div className="w-full bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-1.5 sm:p-2 border border-slate-200/90 shadow-2xs">
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-3 w-full items-stretch">
+          {/* Tombol Halaman Sebelumnya */}
+          <button
+            onClick={onPrevPage}
+            disabled={currentPage <= 1}
+            className="h-10 sm:h-11 w-full flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 rounded-xl sm:rounded-2xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 font-semibold text-xs sm:text-sm disabled:opacity-35 disabled:pointer-events-none transition-all cursor-pointer shadow-2xs whitespace-nowrap overflow-hidden select-none"
+            title="Halaman Sebelumnya"
+          >
+            <ChevronLeft className="w-4 h-4 shrink-0 text-slate-600" />
+            <span className="truncate hidden sm:inline">Halaman Sebelumnya</span>
+            <span className="truncate sm:hidden">Sebelumnya</span>
+          </button>
 
-        <button
-          onClick={onOpenSelector}
-          className="flex-1 min-w-0 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl sm:rounded-2xl bg-white hover:bg-pink-50 text-slate-800 hover:text-pink-700 text-xs sm:text-sm font-bold border border-slate-200/90 hover:border-pink-300 transition-all cursor-pointer truncate shadow-2xs"
-          title="Buka Daftar Surat, Juz & Halaman"
-        >
-          <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-600 shrink-0" />
-          <span className="truncate">Hal. {currentPage}</span>
-          <span className="text-[11px] text-slate-400 font-normal hidden sm:inline truncate">(Juz {currentJuz})</span>
-        </button>
+          {/* Pemilih Halaman & Juz (Tengah) */}
+          <button
+            onClick={onOpenSelector}
+            className="h-10 sm:h-11 w-full flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 rounded-xl sm:rounded-2xl bg-white hover:bg-pink-50 text-slate-800 hover:text-pink-700 border border-slate-200/90 hover:border-pink-300 font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-2xs whitespace-nowrap overflow-hidden select-none"
+            title="Buka Daftar Surat, Juz & Halaman"
+          >
+            <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-600 shrink-0" />
+            <span className="truncate font-display">Hal. {currentPage}</span>
+            <span className="text-[11px] text-slate-400 font-normal hidden sm:inline truncate">(Juz {currentJuz})</span>
+          </button>
 
-        <button
-          onClick={onNextPage}
-          disabled={currentPage >= 604}
-          className="flex-1 min-w-0 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl sm:rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer truncate shadow-2xs"
-          title="Halaman Berikutnya"
-        >
-          <span className="hidden sm:inline truncate">Halaman Berikutnya</span>
-          <span className="sm:hidden truncate">Berikutnya</span>
-          <ChevronRight className="w-4 h-4 shrink-0" />
-        </button>
+          {/* Tombol Halaman Setelahnya */}
+          <button
+            onClick={onNextPage}
+            disabled={currentPage >= 604}
+            className="h-10 sm:h-11 w-full flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 rounded-xl sm:rounded-2xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 font-semibold text-xs sm:text-sm disabled:opacity-35 disabled:pointer-events-none transition-all cursor-pointer shadow-2xs whitespace-nowrap overflow-hidden select-none"
+            title="Halaman Setelahnya"
+          >
+            <span className="truncate hidden sm:inline">Halaman Setelahnya</span>
+            <span className="truncate sm:hidden">Setelahnya</span>
+            <ChevronRight className="w-4 h-4 shrink-0 text-slate-600" />
+          </button>
+        </div>
       </div>
     </div>
   );
