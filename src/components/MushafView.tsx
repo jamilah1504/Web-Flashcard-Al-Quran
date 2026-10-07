@@ -27,6 +27,7 @@ import { ALL_SURAHS, SurahMeta, getPageForSurahAndAyah } from '../data/quranMeta
 import { TajweedText } from './TajweedText';
 import { StatusButtons } from './StatusButtons';
 import { AyahTajweedExplainer } from './AyahTajweedExplainer';
+import { AyahEndSymbol } from './AyahEndSymbol';
 
 interface MushafViewProps {
   ayahs: Ayah[];
@@ -961,9 +962,9 @@ export const MushafView: React.FC<MushafViewProps> = ({
                 </div>
 
                 {/* Arabic Text Display */}
-                <div className="text-right py-2 px-1">
+                <div className="text-right py-2 px-1" dir="rtl">
                   <div
-                    className={`font-arabic text-slate-900 leading-loose transition-all duration-150 ${getFontSizeClass()}`}
+                    className={`font-arabic text-slate-900 leading-[2.6] transition-all duration-150 select-text ${getFontSizeClass()}`}
                     dir="rtl"
                   >
                     {/* Reliably renders TajweedText with full text fallback */}
@@ -978,11 +979,26 @@ export const MushafView: React.FC<MushafViewProps> = ({
                         }))
                       }
                     />
-                    {/* Arabic Verse Number Ornament */}
-                    <span className="inline-flex items-center justify-center font-arabic text-pink-600 mx-2 text-xl align-middle select-none">
-                      ۝{toArabicNumerals(ayah.numberInSurah)}
-                    </span>
+                    {/* Arabic Verse Number Ornament: Always at the END of verse on the LEFT */}
+                    <AyahEndSymbol
+                      number={ayah.numberInSurah}
+                      size={arabicFontSize === 'xl' ? 'lg' : 'md'}
+                    />
                   </div>
+                </div>
+
+                {/* Dedicated Ayah Number Bar: Clearly displays the ayah number at the end and on the left */}
+                <div className="flex items-center justify-between border-t border-slate-100/90 pt-2 mt-1">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-pink-50 border border-pink-200/80 text-pink-800 text-xs font-bold">
+                    <span className="w-5 h-5 rounded-lg bg-pink-600 text-white flex items-center justify-center text-[10px] font-bold shadow-2xs">
+                      {ayah.numberInSurah}
+                    </span>
+                    <span>Akhir Ayat {ayah.numberInSurah}</span>
+                    <span className="font-arabic text-sm text-pink-600 font-bold">﴿{toArabicNumerals(ayah.numberInSurah)}﴾</span>
+                  </div>
+                  <span className="text-[11px] text-slate-400 font-medium">
+                    Hal. {ayah.page} · Juz {ayah.juz}
+                  </span>
                 </div>
 
                 {/* Latin Transliteration */}

@@ -327,6 +327,23 @@ function mapTagToRule(tag: string): {
 }
 
 /**
+ * Checks if a character is an Arabic combining diacritic/harakah
+ */
+export function isCombiningMark(char: string): boolean {
+  if (!char) return false;
+  const code = char.charCodeAt(0);
+  return (
+    (code >= 0x0610 && code <= 0x061a) ||
+    (code >= 0x064b && code <= 0x065f) ||
+    code === 0x0670 ||
+    (code >= 0x06d6 && code <= 0x06dc) ||
+    (code >= 0x06df && code <= 0x06e4) ||
+    (code >= 0x06e7 && code <= 0x06e8) ||
+    (code >= 0x06ea && code <= 0x06ed)
+  );
+}
+
+/**
  * Parses raw tajweed marked string from api.alquran.cloud (e.g. "عَ[g[مّ]َ يَتَس[o[َا]ٓءَل[p[ُو]نَ")
  * If string has no tags, applies rule-based heuristic parsing on standard Arabic text.
  */
@@ -351,7 +368,14 @@ export function parseTajweed(text: string): TajweedToken[] {
       }
 
       const tagRaw = match[1].split(':')[0].toLowerCase();
-      const tokenText = match[2];
+      let tokenText = match[2];
+
+      // Absorb any immediately following combining marks into this token
+      // e.g. Fathah after [g[مّ], Maddah after [o[َا]
+      while (regex.lastIndex < text.length && isCombiningMark(text[regex.lastIndex])) {
+        tokenText += text[regex.lastIndex];
+        regex.lastIndex++;
+      }
 
       const rule = mapTagToRule(tagRaw);
       tokens.push({
@@ -376,7 +400,15 @@ export function parseTajweed(text: string): TajweedToken[] {
       }
     }
 
-    return tokens;
+    // Clean-up pass: ensure no token starts with an orphan combining mark
+    for (let i = 1; i < tokens.length; i++) {
+      while (tokens[i].text.length > 0 && isCombiningMark(tokens[i].text[0])) {
+        tokens[i - 1].text += tokens[i].text[0];
+        tokens[i].text = tokens[i].text.slice(1);
+      }
+    }
+
+    return tokens.filter((t) => t.text.length > 0);
   }
 
   // Fallback: Heuristic tokenization for plain Arabic text
@@ -388,14 +420,8 @@ export function parseTajweed(text: string): TajweedToken[] {
  */
 function parseTajweedHeuristic(text: string): TajweedToken[] {
   const tokens: TajweedToken[] = [];
-  // Regex to detect common Tajweed patterns:
-  // 1. Hamzah wasl: ٱ
-  // 2. Ghunnah: Nun or Mim with shaddah (نّ, مّ, with or without harakat)
-  // 3. Mad: letters with maddah (ٓ, ۦٓ, ۥٓ, or آ)
-  // 4. Mad Thobi'i: dagger alif (ٰ)
-  // 5. Qalqalah: ق, ط, ب, ج, د with sukun (ْ, \u0652)
-  // 6. Iqlab: small mim (ۢ, ۭ)
-  const regex = /(ٱ|[نم](?:[\u064B-\u0650\u0670]?)\u0651|\u0651[نم]|[^\s\u0600-\u061F]*[\u0622\u0653\u06E6\u06E5ٓ~][^\s]*|[قطبجد][ْ\u0652]|[\u0670]|ـٰ|[ۭۢ])/g;
+  // Regex to detect common Tajweed patterns while preventing orphan combining marks
+  const regex = /(ٱ|[نم](?:[\u064B-\u0650]?)\u0651[\u064B-\u0650]?|[^\s\u0600-\u061F]*[\u0622\u0653\u06E6\u06E5ٓ~][^\s]*|[قطبجد][ْ\u0652]|ـٰ|[^\s\u0600-\u061F\u064B-\u065F\u0670][\u064E]?\u0670|[ۭۢ])/g;
   let lastIdx = 0;
   let m: RegExpExecArray | null;
 
@@ -404,7 +430,14 @@ function parseTajweedHeuristic(text: string): TajweedToken[] {
       tokens.push({ text: text.substring(lastIdx, m.index), type: 'normal' });
     }
 
-    const matched = m[0];
+    let matched = m[0];
+
+    // Absorb any immediately following combining marks
+    while (regex.lastIndex < text.length && isCombiningMark(text[regex.lastIndex])) {
+      matched += text[regex.lastIndex];
+      regex.lastIndex++;
+    }
+
     if (matched === 'ٱ') {
       tokens.push({
         text: matched,
@@ -469,7 +502,7 @@ function parseTajweedHeuristic(text: string): TajweedToken[] {
         description: 'Tukar bunyi menjadi Mim lembut',
         howToRead: 'Ubah bunyi Nun mati atau Tanwin menjadi suara huruf Mim lembut tanpa merapatkan bibir terlalu keras, dengungkan 2 harakat.',
         duration: '2 Harakat',
-        letters: 'ب',
+        letters: 'ۢ (Mim Iqlab)',
       });
     } else {
       tokens.push({ text: matched, type: 'normal' });
@@ -482,7 +515,15 @@ function parseTajweedHeuristic(text: string): TajweedToken[] {
     tokens.push({ text: text.substring(lastIdx), type: 'normal' });
   }
 
-  return tokens.length > 0 ? tokens : [{ text, type: 'normal' }];
+  // Clean-up pass: ensure no token starts with an orphan combining mark
+  for (let i = 1; i < tokens.length; i++) {
+    while (tokens[i].text.length > 0 && isCombiningMark(tokens[i].text[0])) {
+      tokens[i - 1].text += tokens[i].text[0];
+      tokens[i].text = tokens[i].text.slice(1);
+    }
+  }
+
+  return tokens.filter((t) => t.text.length > 0);
 }
 
 /**

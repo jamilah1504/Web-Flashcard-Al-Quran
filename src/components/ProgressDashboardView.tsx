@@ -33,6 +33,7 @@ import confetti from 'canvas-confetti';
 import { AyahStatusMap, AyahUserStatus, AyahStatusType, ActiveView } from '../types';
 import { ThemeConfig } from '../utils/themeHelper';
 import { getAyahAudioUrl, getFallbackAudioUrl, toArabicNumerals } from '../utils/quranHelper';
+import { AyahEndSymbol } from './AyahEndSymbol';
 
 interface ProgressDashboardViewProps {
   statusMap: AyahStatusMap;
@@ -798,15 +799,13 @@ export const ProgressDashboardView: React.FC<ProgressDashboardViewProps> = ({
 
                 {/* Arabic Text Display */}
                 {item.arabicText && (
-                  <div className="py-1">
+                  <div className="py-1" dir="rtl">
                     <p
                       dir="rtl"
-                      className="font-arabic text-2xl sm:text-3xl text-slate-800 text-right leading-[2.2] sm:leading-[2.4] select-text"
+                      className="font-arabic text-2xl sm:text-3xl text-slate-800 text-right leading-[2.6] select-text"
                     >
                       {item.arabicText}
-                      <span className="inline-block text-pink-500 text-xl sm:text-2xl mr-2 font-serif select-none">
-                        ۝{toArabicNumerals(item.numberInSurah)}
-                      </span>
+                      <AyahEndSymbol number={item.numberInSurah} size="md" />
                     </p>
                   </div>
                 )}

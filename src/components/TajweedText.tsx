@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { parseTajweed, TajweedToken, TajweedRuleType, TAJWEED_MAP } from '../utils/tajweedHelper';
 
 interface TajweedTextProps {
@@ -20,11 +20,8 @@ export const TajweedText: React.FC<TajweedTextProps> = ({
   onRuleClick,
   onSelectRule,
 }) => {
-  const [activeTooltipIndex, setActiveTooltipIndex] = useState<number | null>(null);
-
   const effectiveText = text || textWithTags || '';
   const effectiveTajweed = tajweedText || textWithTags || effectiveText;
-
   const handleRuleClick = onRuleClick || onSelectRule;
 
   const tokens: TajweedToken[] = useMemo(() => {
@@ -32,12 +29,23 @@ export const TajweedText: React.FC<TajweedTextProps> = ({
     return parseTajweed(effectiveTajweed || effectiveText);
   }, [effectiveText, effectiveTajweed, showTajweed]);
 
+  // Common typography styles to ensure Arabic ligatures & harakat remain crystal clear without collisions
+  const arabicTypographyStyle: React.CSSProperties = {
+    fontFamily: "'Amiri', 'Scheherazade New', 'Traditional Arabic', serif",
+    fontFeatureSettings: '"kern" 1, "liga" 1, "calt" 1, "mkmk" 1, "mark" 1',
+    textRendering: 'optimizeLegibility',
+    WebkitFontSmoothing: 'antialiased',
+    letterSpacing: 'normal',
+    wordSpacing: 'normal',
+  };
+
   if (!showTajweed || tokens.length === 0) {
     return (
       <span
         dir="rtl"
         lang="ar"
-        className={`font-arabic leading-[2.2] select-text tracking-wide ${className}`}
+        className={`font-arabic select-text leading-[2.6] tracking-normal ${className}`}
+        style={arabicTypographyStyle}
       >
         {effectiveText}
       </span>
@@ -48,54 +56,42 @@ export const TajweedText: React.FC<TajweedTextProps> = ({
     <span
       dir="rtl"
       lang="ar"
-      className={`font-arabic leading-[2.2] select-text tracking-wide ${className} relative`}
+      className={`font-arabic select-text leading-[2.6] tracking-normal ${className}`}
+      style={arabicTypographyStyle}
     >
       {tokens.map((token, index) => {
         if (token.type === 'normal' || !token.colorClass) {
-          return <span key={index}>{token.text}</span>;
+          return (
+            <span key={index} style={{ display: 'inline', padding: 0, margin: 0 }}>
+              {token.text}
+            </span>
+          );
         }
 
-        const isTooltipActive = activeTooltipIndex === index;
         const ruleInfo = token.ruleInfo || (token.type ? TAJWEED_MAP.get(token.type) : undefined);
+        const titleText = ruleInfo
+          ? `${ruleInfo.name}: ${ruleInfo.howToRead}`
+          : token.ruleName || 'Hukum Tajwid';
 
         return (
           <span
             key={index}
-            className="relative inline-block group"
-            onMouseEnter={() => setActiveTooltipIndex(index)}
-            onMouseLeave={() => setActiveTooltipIndex(null)}
+            className={`${token.colorClass} cursor-pointer transition-opacity duration-150 hover:opacity-80 active:opacity-70`}
+            style={{
+              // Never use inline-block or horizontal padding inside Arabic cursive words
+              display: 'inline',
+              padding: 0,
+              margin: 0,
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (ruleInfo && handleRuleClick) {
+                handleRuleClick(ruleInfo.id);
+              }
+            }}
+            title={titleText}
           >
-            <span
-              className={`${token.colorClass} transition-all duration-200 cursor-help px-0.5 rounded-sm hover:underline hover:brightness-90`}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (ruleInfo && handleRuleClick) {
-                  handleRuleClick(ruleInfo.id);
-                }
-              }}
-              title={ruleInfo ? `${ruleInfo.name}: ${ruleInfo.howToRead}` : undefined}
-            >
-              {token.text}
-            </span>
-
-            {/* Hover Tooltip Card */}
-            {isTooltipActive && ruleInfo && (
-              <span
-                dir="ltr"
-                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 p-2.5 rounded-xl bg-white text-slate-800 border border-amber-200 shadow-xl z-30 pointer-events-none text-left animate-fadeIn block ring-1 ring-black/5"
-              >
-                <span className="font-bold flex items-center gap-1.5 text-amber-900 text-xs">
-                  <span
-                    className="w-2 h-2 rounded-full shrink-0"
-                    style={{ backgroundColor: ruleInfo.colorHex }}
-                  />
-                  <span>{ruleInfo.name}</span>
-                </span>
-                <span className="text-[11px] text-slate-600 block mt-1 leading-snug">
-                  {ruleInfo.howToRead}
-                </span>
-              </span>
-            )}
+            {token.text}
           </span>
         );
       })}

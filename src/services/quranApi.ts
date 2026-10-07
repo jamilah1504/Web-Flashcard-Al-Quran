@@ -8,7 +8,7 @@ import {
   generateLatinFallback,
 } from '../utils/quranHelper';
 
-const CACHE_PREFIX = 'hafalanku_live_v6_page_';
+const CACHE_PREFIX = 'hafalanku_live_v7_page_';
 const BISMILLAH_REGEX = /^بِسْمِ\s+ٱللَّهِ\s+ٱلرَّحْمَٰنِ\s+ٱلرَّحِيمِ\s*/;
 const BISMILLAH_TAJWEED_REGEX = /^بِسْمِ\s+\[h:?\d*\[ٱ\]للَّهِ\s+\[h:?\d*\[ٱ\]\[l\[ل\]رَّحْمَ\[n\[ـٰ\]نِ\s+\[h:?\d*\[ٱ\]\[l\[ل\]رَّح\[p\[ِي\]مِ\s*/;
 const BISMILLAH_LATIN_REGEX = /^bismillaahir?\s+rahmaanir?\s+raheem\s*/i;

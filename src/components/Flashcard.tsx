@@ -18,6 +18,7 @@ import { parseTajweed, TajweedRuleType } from '../utils/tajweedHelper';
 import { TajweedText } from './TajweedText';
 import { StatusButtons } from './StatusButtons';
 import { AyahTajweedExplainer } from './AyahTajweedExplainer';
+import { AyahEndSymbol } from './AyahEndSymbol';
 
 interface FlashcardProps {
   ayah: Ayah;
@@ -195,11 +196,11 @@ export const Flashcard: React.FC<FlashcardProps> = ({
             </div>
 
             {/* Arabic Opener Phrase with Tajweed support */}
-            <div className="w-full px-2">
+            <div className="w-full px-2" dir="rtl">
               <TajweedText
                 text={ayah.firstPhrase}
                 showTajweed={showTajweed}
-                className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 leading-[2.1] tracking-wide"
+                className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 leading-[2.6]"
                 onRuleClick={(rule) => setSelectedTajweedRule(rule)}
               />
             </div>
@@ -311,17 +312,33 @@ export const Flashcard: React.FC<FlashcardProps> = ({
 
           {/* Center: Full Ayah Text + Latin + Translation + Tajweed Explanation */}
           <div className="relative z-10 flex-1 overflow-y-auto my-auto py-2.5 space-y-3 scrollbar-thin">
-            {/* Arabic Text with Tajweed Coloring */}
-            <div className="text-right px-1">
-              <TajweedText
-                text={ayah.text}
-                tajweedText={ayah.tajweedText}
-                showTajweed={showTajweed}
-                className="text-2xl sm:text-3xl text-slate-900 leading-[2.3]"
-                onRuleClick={(rule) => setSelectedTajweedRule(rule)}
-              />
-              <span className="inline-flex items-center justify-center font-arabic text-xl text-slate-400 mr-2">
-                {toArabicNumerals(ayah.numberInSurah)} ۝
+            {/* Arabic Text with Tajweed Coloring & Ayah Number at the end (left) */}
+            <div className="w-full text-right py-2 px-1" dir="rtl">
+              <div
+                dir="rtl"
+                className="font-arabic text-slate-900 text-2xl sm:text-3xl md:text-[34px] leading-[2.6] select-text"
+              >
+                <TajweedText
+                  text={ayah.text}
+                  tajweedText={ayah.tajweedText}
+                  showTajweed={showTajweed}
+                  onRuleClick={(rule) => setSelectedTajweedRule(rule)}
+                />
+                <AyahEndSymbol number={ayah.numberInSurah} size="lg" />
+              </div>
+            </div>
+
+            {/* Dedicated Ayah Number Bar: Clearly shows the Ayah number at the end and on the left */}
+            <div className="flex items-center justify-between border-y border-slate-100/90 py-1.5 px-2.5 text-xs bg-slate-50/70 rounded-2xl">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-lg bg-pink-600 text-white font-bold flex items-center justify-center text-[11px] shadow-2xs">
+                  {ayah.numberInSurah}
+                </span>
+                <span className="font-bold text-slate-800">Akhir Ayat {ayah.numberInSurah}</span>
+                <span className="font-arabic text-sm text-pink-600 font-bold">﴿{toArabicNumerals(ayah.numberInSurah)}﴾</span>
+              </div>
+              <span className="text-[11px] text-slate-400 font-medium">
+                Surah {ayah.surah.englishName} ({ayah.surah.name})
               </span>
             </div>
 

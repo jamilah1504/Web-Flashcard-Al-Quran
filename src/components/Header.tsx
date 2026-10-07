@@ -253,21 +253,6 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
-          {/* Action 6: Pasang di Layar Utama HP (Install Guide) */}
-          {onOpenInstallGuide && (
-            <button
-              onClick={onOpenInstallGuide}
-              aria-label="Tambahkan ke Layar Utama HP"
-              className="h-8.5 sm:h-9 px-2 xs:px-2.5 rounded-xl sm:rounded-2xl bg-emerald-50/90 hover:bg-emerald-100 active:scale-95 text-emerald-800 border border-emerald-300/80 flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer shrink-0"
-              title="Tambahkan ke Layar Utama HP (PWA)"
-            >
-              <Smartphone className="w-3.5 h-3.5 text-emerald-700" />
-              <span className="hidden lg:inline text-[11px] sm:text-xs font-bold text-emerald-800">
-                Pasang di HP
-              </span>
-            </button>
-          )}
-
           {/* Action 7: Theme Toggle Button & Dropdown */}
           <div className="relative shrink-0">
             <button
